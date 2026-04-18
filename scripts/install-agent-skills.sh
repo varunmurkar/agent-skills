@@ -9,15 +9,7 @@ readonly SOURCE_SKILLS_DIR="${REPO_ROOT}/skills"
 readonly SOURCE_AGENTS_FILE="${REPO_ROOT}/AGENTS.md"
 readonly CODEX_HOME_DIR="${CODEX_HOME:-${HOME}/.codex}"
 
-readonly -a AVAILABLE_SKILLS=(
-  "backend"
-  "engineering-core"
-  "frontend"
-  "pr-review"
-  "security-best-practices"
-  "supabase-postgres-best-practices"
-  "testing"
-)
+AVAILABLE_SKILLS=()
 
 SCOPE=""
 PROJECT_ROOT_INPUT="${PWD}"
@@ -127,6 +119,22 @@ validate_skill() {
   if ! array_contains "$1" "${AVAILABLE_SKILLS[@]}"; then
     die "Unknown skill: $1"
   fi
+}
+
+discover_available_skills() {
+  local skill_dir
+  local discovered=()
+
+  [[ -d "${SOURCE_SKILLS_DIR}" ]] || die "Missing source skills directory: ${SOURCE_SKILLS_DIR}"
+
+  for skill_dir in "${SOURCE_SKILLS_DIR}"/*; do
+    [[ -d "${skill_dir}" ]] || continue
+    [[ -f "${skill_dir}/SKILL.md" ]] || continue
+    discovered+=("$(basename -- "${skill_dir}")")
+  done
+
+  ((${#discovered[@]} > 0)) || die "No installable skills found under ${SOURCE_SKILLS_DIR}"
+  mapfile -t AVAILABLE_SKILLS < <(printf '%s\n' "${discovered[@]}" | sort)
 }
 
 resolve_project_root() {
@@ -639,6 +647,7 @@ build_selected_skills() {
 
 parse_args "$@"
 validate_scope
+discover_available_skills
 
 PROJECT_ROOT="$(resolve_project_root)"
 mapfile -t SELECTED_RUNTIME_TOOLS < <(build_selected_tools)

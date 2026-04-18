@@ -6,6 +6,7 @@
 - Do not create unsolicited analysis files.
 - Lead with key decisions and outcomes, then rationale.
 - Highlight risks and blockers clearly.
+- Do not use emoji for everything.
 
 ## Decision-Making
 
