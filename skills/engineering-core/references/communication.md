@@ -2,6 +2,7 @@
 
 ## Core Principles
 
+- Use caveman skill
 - Keep transient plans, logs, and summaries in chat.
 - Do not create unsolicited analysis files.
 - Lead with key decisions and outcomes, then rationale.
