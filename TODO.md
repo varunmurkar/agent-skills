@@ -1,0 +1,1 @@
+- [ ] Add repo-local auto-start capabilities using hooks and configs/plugins.
