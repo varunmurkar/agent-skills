@@ -61,11 +61,11 @@ triggers:
 
 Open `@references/guide.md` and follow it. Do not proceed without it.
 
-Create effective agent skills through iterative co-development. The skill and its outputs improve together until outputs graduate to exemplars.
+Create effective agent skills via iterative co-development. Skill + outputs improve together until outputs become exemplars.
 
-The guide contains:
-- The co-development flywheel
-- Bootstrapping without exemplars
-- Eval loop mechanics
-- Structure emergence
-- Maturity signals
+Guide contains:
+- co-development flywheel
+- bootstrapping without exemplars
+- eval loop mechanics
+- structure emergence
+- maturity signals

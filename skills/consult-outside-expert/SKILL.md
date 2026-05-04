@@ -66,15 +66,15 @@ triggers:
 
 Open `@references/guide.md` and follow it. Do not proceed without it.
 
-Consult an outside expert to collaboratively refine work through iterative back-and-forth. Use when you want:
-- Fresh perspective on your work
-- Stress-testing from a different angle
-- Steelmanning of ideas
-- Progressive convergence on optimal outcomes
+Use outside expert to refine work through iterative back-and-forth. Use for:
+- fresh perspective
+- stress-test from different angle
+- steelmanning ideas
+- progressive convergence on best outcome
 
-The guide contains:
-- The consultation loop and mediator role
-- Round templates and expert prompts
-- Convergence gates and quality criteria
-- Eval checks and failure modes
-- Working log templates (manual + MCP modes)
+Guide contains:
+- consultation loop + mediator role
+- round templates + expert prompts
+- convergence gates + quality criteria
+- eval checks + failure modes
+- working log templates (manual + MCP modes)

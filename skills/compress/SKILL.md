@@ -11,41 +11,42 @@ description: >
 
 ## Purpose
 
-Compress natural language files (CLAUDE.md, todos, preferences) into caveman-speak to reduce input tokens. Compressed version overwrites original. Human-readable backup saved as `<filename>.original.md`.
+Compress natural-language files (`CLAUDE.md`, todos, preferences) into caveman-speak. Overwrite original; backup as `<filename>.original.md`.
 
 ## Trigger
 
-`/caveman:compress <filepath>` or when user asks to compress a memory file.
+`/caveman:compress <filepath>` or request to compress memory file.
 
 ## Process
 
-1. This SKILL.md lives alongside `scripts/` in the same directory. Find that directory.
-
+1. Find directory containing this `SKILL.md` + sibling `scripts/`.
 2. Run:
 
 cd <directory_containing_this_SKILL.md> && python3 -m scripts <absolute_filepath>
 
-3. The CLI will:
+3. CLI flow:
 - detect file type (no tokens)
 - call Claude to compress
 - validate output (no tokens)
-- if errors: cherry-pick fix with Claude (targeted fixes only, no recompression)
+- errors -> Claude cherry-pick targeted fixes; no full recompression
 - retry up to 2 times
-- if still failing after 2 retries: report error to user, leave original file untouched
+- still failing after 2 retries -> report error; leave original untouched
 
-4. Return result to user
+4. Return result.
 
 ## Compression Rules
 
 ### Remove
+
 - Articles: a, an, the
 - Filler: just, really, basically, actually, simply, essentially, generally
 - Pleasantries: "sure", "certainly", "of course", "happy to", "I'd recommend"
 - Hedging: "it might be worth", "you could consider", "it would be good to"
-- Redundant phrasing: "in order to" → "to", "make sure to" → "ensure", "the reason is because" → "because"
+- Redundant phrasing: "in order to" -> "to", "make sure to" -> "ensure", "the reason is because" -> "because"
 - Connective fluff: "however", "furthermore", "additionally", "in addition"
 
 ### Preserve EXACTLY (never modify)
+
 - Code blocks (fenced ``` and indented)
 - Inline code (`backtick content`)
 - URLs and links (full URLs, markdown links)
@@ -57,18 +58,20 @@ cd <directory_containing_this_SKILL.md> && python3 -m scripts <absolute_filepath
 - Environment variables (`$HOME`, `NODE_ENV`)
 
 ### Preserve Structure
-- All markdown headings (keep exact heading text, compress body below)
-- Bullet point hierarchy (keep nesting level)
-- Numbered lists (keep numbering)
-- Tables (compress cell text, keep structure)
-- Frontmatter/YAML headers in markdown files
+
+- exact markdown headings
+- bullet hierarchy
+- numbered lists
+- table structure; compress cell text
+- frontmatter/YAML headers
 
 ### Compress
-- Use short synonyms: "big" not "extensive", "fix" not "implement a solution for", "use" not "utilize"
+
+- Short words: "big" not "extensive", "fix" not "implement a solution for", "use" not "utilize"
 - Fragments OK: "Run tests before commit" not "You should always run tests before committing"
-- Drop "you should", "make sure to", "remember to" — just state the action
-- Merge redundant bullets that say the same thing differently
-- Keep one example where multiple examples show the same pattern
+- Drop "you should", "make sure to", "remember to"
+- Merge redundant bullets
+- Keep one example per pattern
 
 CRITICAL RULE:
 Anything inside ``` ... ``` must be copied EXACTLY.
@@ -82,10 +85,10 @@ Do not:
 Inline code (`...`) must be preserved EXACTLY.
 Do not modify anything inside backticks.
 
-If file contains code blocks:
-- Treat code blocks as read-only regions
-- Only compress text outside them
-- Do not merge sections around code
+Files with code blocks:
+- code blocks read-only
+- compress prose only
+- do not merge sections around code
 
 ## Pattern
 
@@ -103,9 +106,9 @@ Compressed:
 
 ## Boundaries
 
-- ONLY compress natural language files (.md, .txt, extensionless)
-- NEVER modify: .py, .js, .ts, .json, .yaml, .yml, .toml, .env, .lock, .css, .html, .xml, .sql, .sh
-- If file has mixed content (prose + code), compress ONLY the prose sections
-- If unsure whether something is code or prose, leave it unchanged
-- Original file is backed up as FILE.original.md before overwriting
-- Never compress FILE.original.md (skip it)
+- ONLY natural-language files (`.md`, `.txt`, extensionless)
+- NEVER modify: `.py`, `.js`, `.ts`, `.json`, `.yaml`, `.yml`, `.toml`, `.env`, `.lock`, `.css`, `.html`, `.xml`, `.sql`, `.sh`
+- Mixed content -> compress prose only
+- Unsure code/prose -> leave unchanged
+- Backup original as `FILE.original.md` before overwrite
+- Never compress `FILE.original.md`

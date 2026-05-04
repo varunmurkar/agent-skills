@@ -16,15 +16,15 @@ description: >-
 
 # Documentation Lookup
 
-Get current docs and code examples with Context7 CLI.
+Get current docs + examples via Context7 CLI.
 
-Keep CLI current before commands:
+Update CLI:
 
 ```bash
 npm install -g ctx7@latest
 ```
 
-Or run direct, no install:
+Or direct:
 
 ```bash
 npx ctx7@latest <command>
@@ -32,7 +32,7 @@ npx ctx7@latest <command>
 
 ## Workflow
 
-Two steps: resolve library name to ID, then query docs with ID.
+Resolve library -> query docs.
 
 ```bash
 # Step 1: Resolve library ID
@@ -42,15 +42,15 @@ ctx7 library <name> <query>
 ctx7 docs <libraryId> <query>
 ```
 
-Call `ctx7 library` first to get valid library ID unless user gives `/org/project` or `/org/project/version`.
+Run `ctx7 library` first unless user gives `/org/project` or `/org/project/version`.
 
-Do not run more than 3 commands per question. If 3 attempts fail, use best result.
+Max 3 commands/question. If 3 fail, use best result.
 
-Run Context7 CLI outside Codex default sandbox. If command fails with DNS/network errors like ENOTFOUND, host resolution failure, or fetch failed, rerun outside sandbox. Do not keep retrying inside sandbox.
+Run CLI outside Codex default sandbox. DNS/network fail (`ENOTFOUND`, host resolution failure, fetch failed) -> rerun outside sandbox, no retry loop inside.
 
 ## Step 1: Resolve a Library
 
-Resolve package/product name to Context7 library ID. Return matches.
+Resolve package/product -> Context7 library ID. Return matches.
 
 ```bash
 ctx7 library react "How to clean up useEffect with async operations"
@@ -58,36 +58,29 @@ ctx7 library nextjs "How to set up app router with middleware"
 ctx7 library prisma "How to define one-to-many relations with cascade delete"
 ```
 
-Always pass `query`. Required. Changes ranking. Use user intent to disambiguate similar library names. Never include API keys, passwords, credentials, personal data, or proprietary code.
+Always pass `query`; required and affects ranking. Use user intent to disambiguate similar names. Never include API keys, passwords, credentials, personal data, or proprietary code.
 
 ### Result fields
 
-Each result has:
+- **Library ID** - Context7 ID (`/org/project`)
+- **Name** - library/package
+- **Description** - short summary
+- **Code Snippets** - example count
+- **Source Reputation** - High, Medium, Low, Unknown
+- **Benchmark Score** - quality; 100 max
+- **Versions** - available versions; user version -> matching `/org/project/version`
 
-- **Library ID** — Context7-compatible identifier (format: `/org/project`)
-- **Name** — Library or package name
-- **Description** — Short summary
-- **Code Snippets** — Number of available code examples
-- **Source Reputation** — Authority indicator (High, Medium, Low, or Unknown)
-- **Benchmark Score** — Quality indicator (100 is the highest score)
-- **Versions** — Available versions. If user gives version, use matching `/org/project/version`.
+### Selection
 
-### Selection process
-
-1. Analyze the query to understand what library/package the user is looking for
-2. Pick best match by:
-   - Name similarity to the query (exact matches prioritized)
-   - Description relevance to the query's intent
-   - Documentation coverage (prioritize libraries with higher Code Snippet counts)
-   - Source reputation (consider libraries with High or Medium reputation more authoritative)
-   - Benchmark score (higher is better, 100 is the maximum)
-3. If multiple good matches exist, note that, then use most relevant.
-4. If no good match exists, say so. Suggest query refinement.
-5. If query ambiguous, ask before best-guess match.
+1. Identify target library/package.
+2. Pick best match by exact/name similarity, description relevance, docs coverage, source reputation, benchmark score.
+3. Multiple good matches -> note ambiguity, use most relevant.
+4. No good match -> say so; suggest refined query.
+5. Ambiguous query -> ask before guessing.
 
 ### Version-specific IDs
 
-If user mentions version, use version-specific library ID:
+If user names version, use version-specific ID:
 
 ```bash
 # General (latest indexed)
@@ -97,11 +90,9 @@ ctx7 docs /vercel/next.js "How to set up app router"
 ctx7 docs /vercel/next.js/v14.3.0-canary.87 "How to set up app router"
 ```
 
-Versions appear in `ctx7 library` output. Use closest match.
+Versions appear in `ctx7 library`; use closest match.
 
 ## Step 2: Query Documentation
-
-Get current docs and code examples for resolved library.
 
 ```bash
 ctx7 docs /facebook/react "How to clean up useEffect with async operations"
@@ -109,9 +100,9 @@ ctx7 docs /vercel/next.js "How to add authentication middleware to app router"
 ctx7 docs /prisma/prisma "How to define one-to-many relations with cascade delete"
 ```
 
-### Writing good queries
+### Query quality
 
-Query drives result quality. Be specific. Include relevant detail. Never include API keys, passwords, credentials, personal data, or proprietary code.
+Specific detail wins. Use user's full question when possible. Never include API keys, passwords, credentials, personal data, or proprietary code.
 
 | Quality | Example |
 |---------|---------|
@@ -120,13 +111,13 @@ Query drives result quality. Be specific. Include relevant detail. Never include
 | Bad | `"auth"` |
 | Bad | `"hooks"` |
 
-Use user's full question when possible. Vague one-word queries return generic results.
+One-word queries return generic results.
 
-Output has 2 content types: **code snippets** (titled, language-tagged blocks) and **info snippets** (prose with breadcrumb context).
+Output types: code snippets (title + language block), info snippets (prose + breadcrumb context).
 
-### Retry with `--research` if you weren't satisfied
+### Retry with `--research` if unsatisfied
 
-If default `ctx7 docs` answer not good enough, rerun same command with **`--research`** before giving up or answering from training data. This uses sandboxed agents, git-pulls source repos, adds live web search, then synthesizes fresh answer. More costly. Use as targeted retry.
+Weak default answer -> rerun same command with `--research` before giving up or using training data. It uses sandboxed agents, git-pulls repos, live web search, synthesizes fresh answer. Costly; targeted retry only.
 
 ```bash
 ctx7 docs /vercel/next.js "How does middleware matcher handle dynamic segments in v15?" --research
@@ -134,7 +125,7 @@ ctx7 docs /vercel/next.js "How does middleware matcher handle dynamic segments i
 
 ## Authentication
 
-Works without auth. For higher rate limits:
+No auth required. Higher rate limits:
 
 ```bash
 # Option A: environment variable
@@ -146,16 +137,17 @@ ctx7 login
 
 ## Error Handling
 
-If command fails with quota error ("Monthly quota reached" or "quota exceeded"):
-1. Tell user Context7 quota exhausted.
-2. Suggest auth for higher limits: `ctx7 login`
-3. If they cannot or will not auth, answer from training knowledge and say it may be outdated.
+Quota error (`Monthly quota reached`, `quota exceeded`):
 
-Do not silently fall back to training data. Always say why Context7 was not used.
+1. Tell user Context7 quota exhausted.
+2. Suggest `ctx7 login`.
+3. If no auth, answer from training knowledge and say may be outdated.
+
+Never silently fall back to training data. State why Context7 unused.
 
 ## Common Mistakes
 
-- Library IDs require a `/` prefix — `/facebook/react` not `facebook/react`
-- Always run `ctx7 library` first — `ctx7 docs react "hooks"` will fail without a valid ID
-- Use descriptive queries, not single words — `"React useEffect cleanup function"` not `"hooks"`
-- Do not include sensitive information (API keys, passwords, credentials) in queries
+- Library IDs need `/`: `/facebook/react`, not `facebook/react`.
+- Run `ctx7 library` first: `ctx7 docs react "hooks"` fails.
+- Use descriptive queries: `"React useEffect cleanup function"`, not `"hooks"`.
+- No secrets/sensitive data in queries.
