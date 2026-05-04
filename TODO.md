@@ -1,2 +1,3 @@
+- [ ] update script to insert output of `whoami` in AGENTS.md in place of `$whoami` during installation
 - [ ] Add repo-local auto-start capabilities using hooks and configs/plugins.
 - [ ] Remove OpenCode session notification duplication
