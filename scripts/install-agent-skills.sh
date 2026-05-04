@@ -7,7 +7,6 @@ readonly SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 readonly REPO_ROOT="$(cd -- "${SCRIPT_DIR}/.." && pwd -P)"
 readonly SOURCE_SKILLS_DIR="${REPO_ROOT}/skills"
 readonly SOURCE_AGENTS_FILE="${REPO_ROOT}/AGENTS.md"
-readonly SOURCE_OPENCODE_PLUGIN_FILE="${REPO_ROOT}/templates/opencode/caveman-cavemem-autoload.js"
 readonly CODEX_HOME_DIR="${CODEX_HOME:-${HOME}/.codex}"
 
 AVAILABLE_SKILLS=()
@@ -201,23 +200,6 @@ prompt_new_name() {
   done
 }
 
-prompt_plugin_collision_action() {
-  local target_path="$1"
-  local response
-  if [[ "${REPLACE_ALL}" == "true" ]]; then
-    printf 'replace\n'
-    return
-  fi
-  ensure_interactive
-  while true; do
-    read -r -p "Plugin file already exists at ${target_path}. Choose re[p]lace or [s]kip: " response
-    case "${response,,}" in
-      p|replace) printf 'replace\n'; return ;;
-      s|skip) printf 'skip\n'; return ;;
-    esac
-  done
-}
-
 skill_root_for_tool() {
   local tool="$1"
   local project_root="$2"
@@ -340,8 +322,7 @@ alwaysApply: false
 ---
 # ${rule_name}
 
-Generated from \
-`agent-skills/skills/${source_name}/SKILL.md` for Cursor.
+Generated from \`agent-skills/skills/${source_name}/SKILL.md\` for Cursor.
 
 EOF
     extract_skill_body "${skill_file}"
@@ -523,148 +504,16 @@ alwaysApply: true
 ---
 # Agent Skills Doctrine
 
-Generated from `agent-skills/AGENTS.md` for Cursor.
+Generated from \`agent-skills/AGENTS.md\` for Cursor.
 
 EOF
     cat -- "${SOURCE_AGENTS_FILE}"
     cat <<EOF
 
 ## Installed Skill Paths
-- **Operational Doctrine Index**: installed `engineering-core` guidance is typically ${doctrine_hint}.
+- **Operational Doctrine Index**: installed \`engineering-core\` guidance is typically ${doctrine_hint}.
 EOF
   } > "${target_file}"
-}
-
-resolve_cavemem_bin() {
-  local candidate=""
-  local matches=()
-  local last_index=0
-
-  if candidate="$(command -v cavemem 2>/dev/null)" && [[ -n "${candidate}" ]]; then
-    printf '%s\n' "${candidate}"
-    return
-  fi
-
-  for candidate in "${HOME}/.local/bin/cavemem" "${HOME}/bin/cavemem"; do
-    if [[ -x "${candidate}" ]]; then
-      printf '%s\n' "${candidate}"
-      return
-    fi
-  done
-
-  matches=("${HOME}"/.local/share/mise/installs/node/*/bin/cavemem)
-  if ((${#matches[@]} > 0)); then
-    last_index=$((${#matches[@]} - 1))
-    if [[ -x "${matches[${last_index}]}" ]]; then
-      printf '%s\n' "${matches[${last_index}]}"
-      return
-    fi
-  fi
-
-  matches=("${HOME}"/.local/share/mise/shims/cavemem)
-  if [[ -x "${matches[0]}" ]]; then
-    printf '%s\n' "${matches[0]}"
-    return
-  fi
-
-  printf 'cavemem\n'
-}
-
-resolve_path() {
-  local target="$1"
-
-  if command -v realpath >/dev/null 2>&1; then
-    realpath "${target}"
-    return
-  fi
-
-  if command -v readlink >/dev/null 2>&1; then
-    readlink -f "${target}" 2>/dev/null && return
-  fi
-
-  printf '%s\n' "${target}"
-}
-
-resolve_cavemem_opencode_command() {
-  local cavemem_bin="$1"
-  local cavemem_resolved=""
-  local cavemem_dist_dir=""
-  local cavemem_node_bin=""
-  local cavemem_server_file=""
-  local matches=()
-
-  if [[ "${cavemem_bin}" == /* && -x "${cavemem_bin}" ]]; then
-    cavemem_node_bin="$(dirname -- "${cavemem_bin}")/node"
-    cavemem_resolved="$(resolve_path "${cavemem_bin}")"
-    cavemem_dist_dir="$(dirname -- "${cavemem_resolved}")"
-    matches=("${cavemem_dist_dir}"/server-*.js)
-
-    if [[ -x "${cavemem_node_bin}" && -f "${matches[0]}" ]]; then
-      cavemem_server_file="${matches[0]}"
-    else
-      cavemem_node_bin=""
-    fi
-  fi
-
-  printf '%s\n%s\n%s\n' "${cavemem_bin}" "${cavemem_node_bin}" "${cavemem_server_file}"
-}
-
-write_opencode_autoload_plugin() {
-  local target_file="$1"
-  local cavemem_bin="$2"
-  local cavemem_node_bin="$3"
-  local cavemem_server_file="$4"
-  local escaped_cavemem_bin
-  local escaped_cavemem_node_bin
-  local escaped_cavemem_server_file
-
-  escaped_cavemem_bin="${cavemem_bin//\\/\\\\}"
-  escaped_cavemem_bin="${escaped_cavemem_bin//\"/\\\"}"
-  escaped_cavemem_node_bin="${cavemem_node_bin//\\/\\\\}"
-  escaped_cavemem_node_bin="${escaped_cavemem_node_bin//\"/\\\"}"
-  escaped_cavemem_server_file="${cavemem_server_file//\\/\\\\}"
-  escaped_cavemem_server_file="${escaped_cavemem_server_file//\"/\\\"}"
-
-  mkdir -p -- "$(dirname -- "${target_file}")"
-  sed \
-    -e "s|__CAVEMEM_BIN__|${escaped_cavemem_bin}|g" \
-    -e "s|__CAVEMEM_NODE_BIN__|${escaped_cavemem_node_bin}|g" \
-    -e "s|__CAVEMEM_SERVER_FILE__|${escaped_cavemem_server_file}|g" \
-    "${SOURCE_OPENCODE_PLUGIN_FILE}" > "${target_file}"
-}
-
-install_opencode_user_plugin() {
-  local plugin_root="$1"
-  local cavemem_bin="$2"
-  local cavemem_node_bin="$3"
-  local cavemem_server_file="$4"
-  local target_file="${plugin_root}/agent-skills-autoload.js"
-  local action
-
-  [[ -f "${SOURCE_OPENCODE_PLUGIN_FILE}" ]] || die "Missing ${SOURCE_OPENCODE_PLUGIN_FILE}"
-  mkdir -p -- "${plugin_root}"
-
-  if [[ -e "${target_file}" ]]; then
-    action="$(prompt_plugin_collision_action "${target_file}")"
-    case "${action}" in
-      replace)
-        rm -f -- "${target_file}"
-        ;;
-      skip)
-        info "Skipped OpenCode autoload plugin."
-        return
-        ;;
-    esac
-  fi
-
-  write_opencode_autoload_plugin "${target_file}" "${cavemem_bin}" "${cavemem_node_bin}" "${cavemem_server_file}"
-  info "Installed OpenCode autoload plugin to ${target_file}."
-
-  if [[ "${cavemem_bin}" == "cavemem" ]]; then
-    warn "Could not resolve an absolute cavemem binary. Plugin will fall back to cavemem from PATH."
-  elif [[ -z "${cavemem_node_bin}" || -z "${cavemem_server_file}" ]]; then
-    warn "Could not resolve a direct cavemem server bundle. Plugin will fall back to 'cavemem mcp', which is broken in cavemem 0.1.3."
-  fi
 }
 
 install_cursor_doctrine_rule() {
@@ -850,19 +699,11 @@ else
   fi
 
   if array_contains "opencode" "${SELECTED_RUNTIME_TOOLS[@]}"; then
-    mapfile -t CAVEMEM_OPENCODE_COMMAND < <(resolve_cavemem_opencode_command "$(resolve_cavemem_bin)")
-
     install_user_agents_guidance \
       "${HOME}/.config/opencode/AGENTS.md" \
       "${HOME}/.config/opencode/agent-skills/AGENTS.md" \
       "opencode-user" \
       "${TMP_DIR}/user-opencode-AGENTS.md"
-
-    install_opencode_user_plugin \
-      "${HOME}/.config/opencode/plugins" \
-      "${CAVEMEM_OPENCODE_COMMAND[0]}" \
-      "${CAVEMEM_OPENCODE_COMMAND[1]}" \
-      "${CAVEMEM_OPENCODE_COMMAND[2]}"
   fi
 
   if array_contains "claude" "${SELECTED_RUNTIME_TOOLS[@]}"; then

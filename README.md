@@ -139,27 +139,35 @@ Example:
 skill("caveman")
 ```
 
-#### Caveman + cavemem MCP
+#### Mem0 MCP
 
-You can pair the `caveman` communication style with long-term memory via `cavemem` MCP.
+Long-term memory uses Mem0 MCP. The main installer does not start memory services; run the follow-up setup script for OpenCode:
 
-- Caveman: https://github.com/JuliusBrussee/caveman
-- Cavekit: https://github.com/JuliusBrussee/cavekit
-- Cavemem: https://github.com/JuliusBrussee/cavemem
+```bash
+./scripts/setup-mem0-mcp.sh
+```
 
-This repo includes an OpenCode autoload template at `templates/opencode/caveman-cavemem-autoload.js` that:
+This creates/reuses `~/.local/share/ai-tools/.venv`, writes `~/.local/share/ai-tools/mem0_server.py`, installs pinned Python packages, and configures `~/.config/opencode/opencode.json` with `mcp.mem0.enabled=true` by default.
 
-- auto-registers a local `cavemem` MCP server
-- injects caveman response style into system instructions
-- optionally prepends the cavemem binary directory to `PATH`
-- sends desktop notifications on session completion/error
+Useful options:
 
-When cavemem MCP is active, available tools include:
+```bash
+./scripts/setup-mem0-mcp.sh --disable
+./scripts/setup-mem0-mcp.sh --replace
+./scripts/setup-mem0-mcp.sh --llm-model gpt-oss:120b-cloud --embed-model nomic-embed-text:latest
+```
 
-- `cavemem_search`: find relevant prior memories
-- `cavemem_list_sessions`: list recent memory sessions
-- `cavemem_timeline`: inspect a session around a point
-- `cavemem_get_observations`: fetch full observation bodies
+Expected local services:
+
+- Qdrant at `localhost:6333` (collection `opencode_memory`)
+- Ollama at `http://localhost:11434`
+- Ollama models `gpt-oss:120b-cloud` and `nomic-embed-text:latest`
+
+The installed MCP server exposes:
+
+- `add_memory`: store information
+- `search_memory`: search relevant memories
+- `get_all_memories`: list scoped memories
 
 ### Cursor
 
