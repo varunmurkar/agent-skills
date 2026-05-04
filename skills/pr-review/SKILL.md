@@ -50,3 +50,4 @@ Provide one reusable PR-review procedure while letting project overlays define c
 - Respect project overlays for stack-specific gates.
 - Keep fixes small, readable, and reversible.
 - If tools conflict, prioritize security and correctness over style.
+- Do not run coderabbit a second time to verify, rate limits will block.

@@ -4,13 +4,41 @@ Reusable agent skills and companion instruction files for Codex, Claude Code, Cu
 
 ## Included skills
 
-- `backend`
+Core workflow:
+
 - `engineering-core`
+- `backend`
 - `frontend`
-- `pr-review`
-- `security-best-practices`
-- `supabase-postgres-best-practices`
 - `testing`
+- `pr-review`
+- `consult-outside-expert`
+- `address-pr-reviews`
+
+Spec-driven development:
+
+- `spec`
+- `build`
+- `check`
+- `backprop`
+
+Caveman ecosystem:
+
+- `caveman`
+- `caveman-commit`
+- `caveman-review`
+- `compress`
+
+Security and platform:
+
+- `security-best-practices`
+- `harden-github-actions`
+- `supabase`
+- `supabase-postgres-best-practices`
+
+Skill authoring:
+
+- `skill-crafting`
+- `find-docs`
 
 ## Install
 
@@ -104,6 +132,34 @@ Examples:
 ### OpenCode
 
 Start OpenCode in the target repo after installation. OpenCode discovers the installed skills and can load them through its native `skill` tool or when they match the request.
+
+Example:
+
+```text
+skill("caveman")
+```
+
+#### Caveman + cavemem MCP
+
+You can pair the `caveman` communication style with long-term memory via `cavemem` MCP.
+
+- Caveman: https://github.com/JuliusBrussee/caveman
+- Cavekit: https://github.com/JuliusBrussee/cavekit
+- Cavemem: https://github.com/JuliusBrussee/cavemem
+
+This repo includes an OpenCode autoload template at `templates/opencode/caveman-cavemem-autoload.js` that:
+
+- auto-registers a local `cavemem` MCP server
+- injects caveman response style into system instructions
+- optionally prepends the cavemem binary directory to `PATH`
+- sends desktop notifications on session completion/error
+
+When cavemem MCP is active, available tools include:
+
+- `cavemem_search`: find relevant prior memories
+- `cavemem_list_sessions`: list recent memory sessions
+- `cavemem_timeline`: inspect a session around a point
+- `cavemem_get_observations`: fetch full observation bodies
 
 ### Cursor
 

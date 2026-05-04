@@ -582,21 +582,74 @@ resolve_cavemem_bin() {
   printf 'cavemem\n'
 }
 
+resolve_path() {
+  local target="$1"
+
+  if command -v realpath >/dev/null 2>&1; then
+    realpath "${target}"
+    return
+  fi
+
+  if command -v readlink >/dev/null 2>&1; then
+    readlink -f "${target}" 2>/dev/null && return
+  fi
+
+  printf '%s\n' "${target}"
+}
+
+resolve_cavemem_opencode_command() {
+  local cavemem_bin="$1"
+  local cavemem_resolved=""
+  local cavemem_dist_dir=""
+  local cavemem_node_bin=""
+  local cavemem_server_file=""
+  local matches=()
+
+  if [[ "${cavemem_bin}" == /* && -x "${cavemem_bin}" ]]; then
+    cavemem_node_bin="$(dirname -- "${cavemem_bin}")/node"
+    cavemem_resolved="$(resolve_path "${cavemem_bin}")"
+    cavemem_dist_dir="$(dirname -- "${cavemem_resolved}")"
+    matches=("${cavemem_dist_dir}"/server-*.js)
+
+    if [[ -x "${cavemem_node_bin}" && -f "${matches[0]}" ]]; then
+      cavemem_server_file="${matches[0]}"
+    else
+      cavemem_node_bin=""
+    fi
+  fi
+
+  printf '%s\n%s\n%s\n' "${cavemem_bin}" "${cavemem_node_bin}" "${cavemem_server_file}"
+}
+
 write_opencode_autoload_plugin() {
   local target_file="$1"
   local cavemem_bin="$2"
+  local cavemem_node_bin="$3"
+  local cavemem_server_file="$4"
   local escaped_cavemem_bin
+  local escaped_cavemem_node_bin
+  local escaped_cavemem_server_file
 
   escaped_cavemem_bin="${cavemem_bin//\\/\\\\}"
   escaped_cavemem_bin="${escaped_cavemem_bin//\"/\\\"}"
+  escaped_cavemem_node_bin="${cavemem_node_bin//\\/\\\\}"
+  escaped_cavemem_node_bin="${escaped_cavemem_node_bin//\"/\\\"}"
+  escaped_cavemem_server_file="${cavemem_server_file//\\/\\\\}"
+  escaped_cavemem_server_file="${escaped_cavemem_server_file//\"/\\\"}"
 
   mkdir -p -- "$(dirname -- "${target_file}")"
-  sed "s|__CAVEMEM_BIN__|${escaped_cavemem_bin}|g" "${SOURCE_OPENCODE_PLUGIN_FILE}" > "${target_file}"
+  sed \
+    -e "s|__CAVEMEM_BIN__|${escaped_cavemem_bin}|g" \
+    -e "s|__CAVEMEM_NODE_BIN__|${escaped_cavemem_node_bin}|g" \
+    -e "s|__CAVEMEM_SERVER_FILE__|${escaped_cavemem_server_file}|g" \
+    "${SOURCE_OPENCODE_PLUGIN_FILE}" > "${target_file}"
 }
 
 install_opencode_user_plugin() {
   local plugin_root="$1"
   local cavemem_bin="$2"
+  local cavemem_node_bin="$3"
+  local cavemem_server_file="$4"
   local target_file="${plugin_root}/agent-skills-autoload.js"
   local action
 
@@ -616,11 +669,13 @@ install_opencode_user_plugin() {
     esac
   fi
 
-  write_opencode_autoload_plugin "${target_file}" "${cavemem_bin}"
+  write_opencode_autoload_plugin "${target_file}" "${cavemem_bin}" "${cavemem_node_bin}" "${cavemem_server_file}"
   info "Installed OpenCode autoload plugin to ${target_file}."
 
   if [[ "${cavemem_bin}" == "cavemem" ]]; then
     warn "Could not resolve an absolute cavemem binary. Plugin will fall back to cavemem from PATH."
+  elif [[ -z "${cavemem_node_bin}" || -z "${cavemem_server_file}" ]]; then
+    warn "Could not resolve a direct cavemem server bundle. Plugin will fall back to 'cavemem mcp', which is broken in cavemem 0.1.3."
   fi
 }
 
@@ -803,6 +858,8 @@ else
   fi
 
   if array_contains "opencode" "${SELECTED_RUNTIME_TOOLS[@]}"; then
+    mapfile -t CAVEMEM_OPENCODE_COMMAND < <(resolve_cavemem_opencode_command "$(resolve_cavemem_bin)")
+
     install_user_agents_guidance \
       "${HOME}/.config/opencode/AGENTS.md" \
       "${HOME}/.config/opencode/agent-skills/AGENTS.md" \
@@ -811,7 +868,9 @@ else
 
     install_opencode_user_plugin \
       "${HOME}/.config/opencode/plugins" \
-      "$(resolve_cavemem_bin)"
+      "${CAVEMEM_OPENCODE_COMMAND[0]}" \
+      "${CAVEMEM_OPENCODE_COMMAND[1]}" \
+      "${CAVEMEM_OPENCODE_COMMAND[2]}"
   fi
 
   if array_contains "claude" "${SELECTED_RUNTIME_TOOLS[@]}"; then

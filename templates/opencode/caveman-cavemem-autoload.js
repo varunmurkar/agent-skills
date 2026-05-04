@@ -1,6 +1,11 @@
 export const CavemanCavememAutoload = async ({ $ }) => {
   const cavememBin = "__CAVEMEM_BIN__"
+  const cavememNodeBin = "__CAVEMEM_NODE_BIN__"
+  const cavememServerFile = "__CAVEMEM_SERVER_FILE__"
   const cavememDir = cavememBin && cavememBin !== "cavemem" ? cavememBin.replace(/\/[^/]+$/, "") : ""
+  const cavememCommand = cavememNodeBin && cavememServerFile
+    ? [cavememNodeBin, cavememServerFile]
+    : [cavememBin || "cavemem", "mcp"]
 
   const notify = async (title, message) => {
     try {
@@ -24,7 +29,7 @@ export const CavemanCavememAutoload = async ({ $ }) => {
       if (!config.mcp.cavemem) {
         config.mcp.cavemem = {
           type: "local",
-          command: [cavememBin || "cavemem", "mcp"],
+          command: cavememCommand,
           enabled: true,
         }
       }
