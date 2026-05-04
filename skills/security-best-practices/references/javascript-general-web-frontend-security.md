@@ -1,58 +1,10 @@
 # Frontend JavaScript/TypeScript Web Security Spec (Vanilla Browser JS/TS, Modern Browsers)
 
-This document is designed as a **security spec** that supports:
+Read `_common-web-security-spec.md` first. This file adds browser JS/TS-specific audit order, untrusted inputs, dangerous sinks, production baseline, rules, detection hints, and fixes.
 
-1. **Secure-by-default code generation** for new frontend JavaScript/TypeScript (no specific framework assumed).
-2. **Security review / vulnerability hunting** in existing frontend code (passive “notice issues while working” and active “scan the repo and report findings”).
+Frontend code is observable by users. Secrets must not be in browser-delivered code. Public/publishable keys are non-secret and must be scoped accordingly. Security headers may live at server/edge/CDN; if not visible, report `not visible here; verify at runtime/edge config`. `<meta http-equiv=...>` only simulates a subset of headers. ([MDN Web Docs][1])
 
-It is intentionally written as a set of **normative requirements** (“MUST/SHOULD/MAY”) plus **audit rules** (what bad patterns look like, how to detect them, and how to fix/mitigate them).
-
----
-
-## 0) Safety, boundaries, and anti-abuse constraints (MUST FOLLOW)
-
-* MUST NOT request, output, log, hard-code, or commit secrets (API keys intended to be secret, private keys, passwords, OAuth refresh tokens, session tokens, cookies).
-  Notes:
-
-  * Frontend code is inherently observable by end users. If a value must remain secret, it must not be in browser-delivered code.
-  * If the project uses “public” keys (e.g., publishable analytics keys), they MUST be treated as non-secret and scoped accordingly.
-
-* MUST NOT “fix” security by disabling protections (e.g., weakening CSP with `unsafe-inline`/`unsafe-eval` without justification, removing origin checks for `postMessage`, switching to `innerHTML` for convenience, accepting arbitrary redirects/URLs, or turning off sanitization).
-
-* MUST provide **evidence-based findings** during audits: cite file paths, code snippets, and relevant HTML/CSP/config values that justify the claim.
-
-* MUST treat uncertainty honestly:
-
-  * Security headers (CSP, frame-ancestors, etc.) might be set by server/edge/CDN rather than in repo code. If not visible, report as “not visible here; verify at runtime/edge config.” (Also note that `<meta http-equiv=...>` only simulates a subset of headers; don’t assume other security headers exist just because a meta tag exists.) ([MDN Web Docs][1])
-
----
-
-## 1) Operating modes
-
-### 1.1 Generation mode (default)
-
-When asked to write new frontend JS/TS code or modify existing code:
-
-* MUST follow every **MUST** requirement in this spec.
-* SHOULD follow every **SHOULD** requirement unless the user explicitly says otherwise.
-* MUST prefer safe-by-default browser APIs and proven libraries over custom security code (especially for HTML sanitization).
-* MUST avoid introducing new risky sinks (DOM XSS injection sinks like `innerHTML`, navigation to `javascript:` URLs, dynamic code execution via `eval`/`Function`, unsafe `postMessage`, unsafe third-party script loading, etc.). ([OWASP Cheat Sheet Series][2])
-
-### 1.2 Passive review mode (always on while editing)
-
-While working anywhere in a frontend repo (even if the user did not ask for a security scan):
-
-* MUST “notice” violations of this spec in touched/nearby code.
-* SHOULD mention issues as they come up, with a brief explanation + safe fix.
-
-### 1.3 Active audit mode (explicit scan request)
-
-When the user asks to “scan”, “audit”, or “hunt for vulns”:
-
-* MUST systematically search the codebase for violations of this spec.
-* MUST output findings in a structured format (see §2.3).
-
-Recommended audit order:
+## Frontend JS/TS Audit Order
 
 1. HTML entrypoints (`index.html`, server-rendered templates), script/style includes, and any CSP delivery (header vs meta). ([W3C][3])
 2. DOM XSS sinks (`innerHTML`, `document.write`, `insertAdjacentHTML`, event-handler attributes) and their data sources (URL params/hash, storage, postMessage, API responses). ([OWASP Cheat Sheet Series][2])
@@ -64,7 +16,7 @@ Recommended audit order:
 
 ---
 
-## 2) Definitions and review guidance
+## Frontend JS/TS-Specific Definitions
 
 ### 2.1 Untrusted input (treat as attacker-controlled unless proven otherwise)
 
@@ -84,19 +36,6 @@ A sink is any API/operation that can execute script or interpret attacker-contro
 * Dynamic code execution: `eval`, `new Function`, `setTimeout("...")`, `setInterval("...")`. ([MDN Web Docs][10])
 * Navigation to script-bearing URLs (e.g., `javascript:`) via setters like `Location.href`/`window.location` (and via link `href` if attacker-controlled). ([MDN Web Docs][4])
 * Setting event handler attributes from strings, e.g. `setAttribute("onclick", "...")`. ([OWASP Cheat Sheet Series][2])
-
-### 2.3 Required audit finding format
-
-For each issue found, output:
-
-* Rule ID:
-* Severity: Critical / High / Medium / Low
-* Location: file path + function/class/module + line(s)
-* Evidence: the exact code/config snippet
-* Impact: what could go wrong, who can exploit it
-* Fix: safe change (prefer minimal diff)
-* Mitigation: defense-in-depth if immediate fix is hard
-* False positive notes: what to verify if uncertain
 
 ---
 
@@ -277,7 +216,7 @@ Fix:
 
 Severity: Low (High if you can prove an attacker can fully control the URL)
 
-IMPORTANT: This can cause a lot of false positives. Please perform extra analysis to determine if the url is fully attacker controlled. If not fully attacker controlled, then this is informational at best.
+URL sink false-positive rule: only flag as vulnerability when URL is fully attacker-controlled; otherwise informational at best.
 
 NOTE: It may be important functionality to be able to redirect to any given url. If that is the goal of the feature, then at a minimum, ensure it checks the schema even if the origin is allowed to be anything.
 
@@ -322,7 +261,7 @@ Mitigation:
 
 False positive notes:
 
-IMPORTANT: This can cause a lot of false positives. Please perform extra analysis to determine if the url is fully attacker controlled. If not fully attacker controlled, then this is informational at best.
+Apply URL sink false-positive rule from JS-URL-001.
 
 * Some apps intentionally support external redirects (SSO, payment flows). Those MUST be allowlisted and documented.
 
@@ -352,8 +291,6 @@ Detection hints:
 
 * Search for `.href =`, `.src =`, `.action =`, `setAttribute("href"`, `setAttribute("src"`.
 * Search for `javascript:` / `data:` usage in URLs. ([MDN Web Docs][4])
-
-IMPORTANT: This can cause a lot of false positives. Please perform extra analysis to determine if the url is fully attacker controlled. If not fully attacker controlled, then this is informational at best.
 
 Fix:
 

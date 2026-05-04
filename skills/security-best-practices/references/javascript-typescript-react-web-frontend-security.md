@@ -1,52 +1,10 @@
 # React (JavaScript/TypeScript) Web Security Spec (React 19.x, TypeScript 5.x)
 
-This document is designed as a **security spec** that supports:
+Read `_common-web-security-spec.md` first. This file adds React-specific audit order, untrusted inputs, frontend state-changing request notes, production baseline, rules, detection hints, and fixes.
 
-1. **Secure-by-default code generation** for new React code.
-2. **Security review / vulnerability hunting** in existing React code (passive “notice issues while working” and active “scan the repo and report findings”).
+Frontend note: browser-shipped code is observable (view-source, devtools, proxies). Never treat client code or bundled env vars as secret. ([create-react-app.dev][1])
 
-It is intentionally written as a set of **normative requirements** (“MUST/SHOULD/MAY”) plus **audit rules** (what bad patterns look like, how to detect them, and how to fix/mitigate them).
-
----
-
-## 0) Safety, boundaries, and anti-abuse constraints (MUST FOLLOW)
-
-* MUST NOT request, output, log, or commit secrets (API keys, OAuth client secrets, private keys, session cookies, JWTs, signing keys).
-
-  * Frontend note: anything shipped to the browser is observable by end users and attackers (view-source, devtools, proxies); never treat client code or “env vars in the bundle” as secret. ([create-react-app.dev][1])
-* MUST NOT “fix” security by disabling protections (e.g., turning off CSP to “make it work”, adding `unsafe-inline`/`unsafe-eval` without a documented, constrained plan, disabling CSRF protections when using cookies, widening CORS, skipping sanitization, or “temporary” bypasses that ship). ([OWASP Cheat Sheet Series][2])
-* MUST provide **evidence-based findings** during audits: cite file paths, code snippets, and configuration values that justify the claim.
-* MUST treat uncertainty honestly: if a protection might exist in infra (CDN/WAF/reverse proxy), report it as “not visible in app code; verify via runtime headers / edge config”.
-* MUST assume any data that crosses a trust boundary (URL, storage, network, postMessage, third-party scripts) can be attacker-influenced unless proven otherwise (see §2.1).
-
----
-
-## 1) Operating modes
-
-### 1.1 Generation mode (default)
-
-When asked to write new React code or modify existing code:
-
-* MUST follow every **MUST** requirement in this spec.
-* SHOULD follow every **SHOULD** requirement unless the user explicitly says otherwise.
-* MUST prefer safe-by-default APIs and proven libraries over custom security code.
-* MUST avoid introducing new risky sinks (raw HTML insertion, direct DOM sinks like `innerHTML`, dynamic code execution, untrusted redirects/navigation, third‑party script injection, unsafe token storage, etc.). ([MDN Web Docs][3])
-
-### 1.2 Passive review mode (always on while editing)
-
-While working anywhere in a React repo (even if the user did not ask for a security scan):
-
-* MUST “notice” violations of this spec in touched/nearby code.
-* SHOULD mention issues as they come up, with a brief explanation + safe fix.
-
-### 1.3 Active audit mode (explicit scan request)
-
-When the user asks to “scan”, “audit”, or “hunt for vulns”:
-
-* MUST systematically search the codebase for violations of this spec.
-* MUST output findings in a structured format (see §2.3).
-
-Recommended audit order:
+## React Audit Order
 
 1. App entrypoints, build tooling (Vite/Webpack/CRA/Next), deployment configs, CDN/static hosting config.
 2. Secrets & configuration exposure (env vars, runtime config injection, source maps).
@@ -61,7 +19,7 @@ Recommended audit order:
 
 ---
 
-## 2) Definitions and review guidance
+## React-Specific Definitions
 
 ### 2.1 Untrusted input (treat as attacker-controlled unless proven otherwise)
 
@@ -81,19 +39,6 @@ A request is state-changing if it can create/update/delete data, change auth/ses
 Frontend-specific note:
 
 * State changes are often triggered by `fetch/axios` calls or form submissions. If authentication is cookie-based, these calls can be CSRF-relevant (§4 REACT-CSRF-001). ([OWASP Cheat Sheet Series][6])
-
-### 2.3 Required audit finding format
-
-For each issue found, output:
-
-* Rule ID:
-* Severity: Critical / High / Medium / Low
-* Location: file path + component/function + line(s)
-* Evidence: the exact code/config snippet
-* Impact: what could go wrong, who can exploit it
-* Fix: safe change (prefer minimal diff)
-* Mitigation: defense-in-depth if immediate fix is hard
-* False positive notes: what to verify if uncertain
 
 ---
 

@@ -1,42 +1,9 @@
 # Flask (Python) Web Security Spec (Flask 3.1.x, Python 3.x)
 
-This document is designed as a **security spec** that supports:
-1) **Secure-by-default code generation** for new Flask code.
-2) **Security review / vulnerability hunting** in existing Flask code (passive “notice issues while working” and active “scan the repo and report findings”).
+Read `_common-web-security-spec.md` first. This file adds Flask-specific audit order, untrusted inputs, production baseline, rules, detection hints, and fixes.
 
-It is intentionally written as a set of **normative requirements** (“MUST/SHOULD/MAY”) plus **audit rules** (what bad patterns look like, how to detect them, and how to fix/mitigate them).
+## Flask Audit Order
 
---------------------------------------------------------------------
-
-## 0) Safety, boundaries, and anti-abuse constraints (MUST FOLLOW)
-
-- MUST NOT request, output, log, or commit secrets (API keys, passwords, private keys, session cookies, SECRET_KEY).
-- MUST NOT “fix” security by disabling protections (e.g., turning off CSRF, relaxing CORS, disabling escaping, disabling auth checks).
-- MUST provide **evidence-based findings** during audits: cite file paths, code snippets, and configuration values that justify the claim.
-- MUST treat uncertainty honestly: if a protection might exist in infrastructure (reverse proxy, WAF, CDN), report it as “not visible in app code; verify at runtime/config”.
-
---------------------------------------------------------------------
-
-## 1) Operating modes
-
-### 1.1 Generation mode (default)
-When asked to write new Flask code or modify existing code:
-- MUST follow every **MUST** requirement in this spec.
-- SHOULD follow every **SHOULD** requirement unless the user explicitly says otherwise.
-- MUST prefer safe-by-default APIs and proven libraries over custom security code.
-- MUST avoid introducing new risky sinks (template rendering from strings, shell execution, dynamic imports, unsafe redirects, serving user files as HTML, etc.).
-
-### 1.2 Passive review mode (always on while editing)
-While working anywhere in a Flask repo (even if the user did not ask for a security scan):
-- MUST “notice” violations of this spec in touched/nearby code.
-- SHOULD mention issues as they come up, with a brief explanation + safe fix.
-
-### 1.3 Active audit mode (explicit scan request)
-When the user asks to “scan”, “audit”, or “hunt for vulns”:
-- MUST systematically search the codebase for violations of this spec.
-- MUST output findings in a structured format (see §2.3).
-
-Recommended audit order:
 1) App entrypoints / deployment scripts / Dockerfiles / Procfiles.
 2) Flask configuration and environment handling.
 3) Auth + sessions + cookies.
@@ -48,9 +15,7 @@ Recommended audit order:
 9) Redirect handling (open redirects).
 10) CORS and security headers.
 
---------------------------------------------------------------------
-
-## 2) Definitions and review guidance
+## Flask-Specific Definitions
 
 ### 2.1 Untrusted input (treat as attacker-controlled unless proven otherwise)
 Examples include:
@@ -60,21 +25,6 @@ Examples include:
 - URL path parameters (e.g., `/user/<id>`)
 - Any data from external systems (webhooks, third-party APIs, message queues)
 - Any persisted user content (DB rows) that originated from users
-
-### 2.2 State-changing request
-A request is state-changing if it can create/update/delete data, change auth/session state, trigger side effects (purchase, email send, webhook send), or initiate privileged actions.
-
-### 2.3 Required audit finding format
-For each issue found, output:
-
-- Rule ID:
-- Severity: Critical / High / Medium / Low
-- Location: file path + function/route name + line(s)
-- Evidence: the exact code/config snippet
-- Impact: what could go wrong, who can exploit it
-- Fix: safe change (prefer minimal diff)
-- Mitigation: defense-in-depth if immediate fix is hard
-- False positive notes: what to verify if uncertain
 
 --------------------------------------------------------------------
 
@@ -103,6 +53,8 @@ Key baseline config targets:
 
 Each rule contains: required practice, insecure patterns, detection hints, and remediation.
 
+Deployment/debug false-positive rule: local dev/test use of `app.run`, `flask run`, `--debug`, or debug config is allowed. Flag only when clearly used as production entrypoint/runtime.
+
 ### FLASK-DEPLOY-001: Do not use Flask’s development server in production
 Severity: High (if production)
 
@@ -121,9 +73,6 @@ Detection hints:
 Fix:
 - Use a production WSGI server (and keep Flask as the app object).
 - Ensure the dev server is only used for local development.
-
-Note:
-- These are often used in dev mode or local testing. This is allowed. Only flag if it is clear that it is being used as the production entrypoint
 
 ---
 
@@ -146,9 +95,6 @@ Detection hints:
 Fix:
 - Ensure debug is only enabled in local dev/test.
 - Prefer environment-based toggles and safe defaults.
-
-Note:
-- These are often used in dev mode or local testing. This is allowed. Only flag if it is clear that it is being used as the production entrypoint
 
 ---
 

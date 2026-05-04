@@ -93,62 +93,8 @@ Don't wait until done. When you hit friction:
 - Add or refine an eval check
 
 ### Escalation triggers
-STOP and involve the human when you encounter:
 
-| Trigger | Example |
-|---------|---------|
-| **Design tradeoff** | Simple-but-limited vs complex-but-complete |
-| **Scope change** | Fix would significantly change skill's purpose |
-| **"By design" response** | Wanting to mark an issue as intentional |
-| **Repeated issue** | Same problem surfaces 2+ rounds |
-| **Accepting limitations** | Documenting a gap rather than fixing it |
-| **Architectural choice** | Solution affects overall structure |
-
-**When triggers fire** - STOP and present decision:
-
-**Option 1: AskUserQuestion tool** (Claude Code)
-```
-AskUserQuestion({
-  questions: [{
-    question: "[Issue]? Stake: [what gets worse if wrong]",
-    header: "Design",
-    options: [
-      { label: "Option A (Recommended)", description: "[approach] - Pro: X, Con: Y" },
-      { label: "Option B", description: "[approach] - Pro: X, Con: Y" }
-    ],
-    multiSelect: false
-  }]
-})
-```
-
-**Option 2: Text template** (portable fallback)
-```
-DECISION POINT: [issue]
-Stake: [what gets worse if we choose wrong]
-
-Option A: [approach]
-- Pro: ...
-- Con: ...
-
-Option B: [approach]
-- Pro: ...
-- Con: ...
-
-Recommendation: [A/B] because [reasoning]
-
-Your call?
-```
-
-Wait for explicit response before proceeding. Log: `Approved: [decision] by [user]`
-
-**When no triggers fire** - state explicitly:
-```
-Decision points: none this round.
-```
-
-This creates an auditable trace. Silence cannot masquerade as compliance.
-
-**Discretion expected.** Escalate design tradeoffs that shape the outcome, not every minor choice.
+Use `../../engineering-core/references/human-decision-points.md`. STOP on listed triggers; present AskUserQuestion or portable DECISION POINT template; wait for explicit approval; record `Decision points: none this round.` when no triggers fire.
 
 ### Draft eval checks
 Eval checks should be runnable where possible:

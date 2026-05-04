@@ -118,16 +118,7 @@ The worker reported these changes this round:
 Currently open findings that should have been addressed:
 {open_findings_with_ids}
 
-Produce a review with findings. For each concern:
-- Severity: H (blocks shipping), M (should fix), L (nice to have)
-- Claim: what's wrong
-- Evidence: specific reference (file, line, section)
-- Required action: what to do
-
-Also check whether previously open findings have been adequately addressed.
-Report which open findings are now fixed (with evidence) and which remain unfixed.
-
-Return ONLY the structured findings list, not a narrative review.
+Use Reviewer Output Requirements below.
 ```
 
 **Implement mode:**
@@ -141,17 +132,13 @@ The worker reported these changes this round:
 Currently open findings that should have been addressed:
 {open_findings_with_ids}
 
-Produce a review with findings. For each concern:
-- Severity: H (blocks shipping), M (should fix), L (nice to have)
-- Claim: what's wrong
-- Evidence: specific file and line reference
-- Required action: what to do
-
-Also check whether previously open findings have been adequately addressed.
-Report which open findings are now fixed (with evidence) and which remain unfixed.
-
-Return ONLY the structured findings list, not a narrative review.
+Use Reviewer Output Requirements below.
 ```
+
+**Reviewer Output Requirements:**
+- Produce findings only; no narrative review.
+- For each concern: Severity H/M/L, Claim, Evidence (file/line/section), Required action.
+- Check previously open findings; report fixed with evidence and still-unfixed.
 
 ---
 

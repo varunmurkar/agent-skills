@@ -1,55 +1,10 @@
 # FastAPI (Python) Web Security Spec (FastAPI 0.128.x, Python 3.x) ([PyPI][1])
 
-This document is designed as a **security spec** that supports:
+Read `_common-web-security-spec.md` first. This file adds FastAPI-specific audit order, untrusted inputs, production baseline, rules, detection hints, and fixes. FastAPI commonly deploys with ASGI server (e.g., Uvicorn) and is built on Starlette + Pydantic, so this spec covers those layers where security-relevant. ([PyPI][1])
 
-1. **Secure-by-default code generation** for new FastAPI code.
-2. **Security review / vulnerability hunting** in existing FastAPI code (passive “notice issues while working” and active “scan the repo and report findings”).
+Browser-control caveat: CORS is not auth; it only affects browsers. CSRF applies when browser automatically attaches credentials (cookies), usually not for pure header-token APIs. ([OWASP Cheat Sheet Series][2])
 
-It is intentionally written as a set of **normative requirements** (“MUST/SHOULD/MAY”) plus **audit rules** (what bad patterns look like, how to detect them, and how to fix/mitigate them).
-
-FastAPI is commonly deployed with an ASGI server (e.g., Uvicorn) and is built on Starlette + Pydantic, so this spec covers those layers where they affect security. ([PyPI][1])
-
----
-
-## 0) Safety, boundaries, and anti-abuse constraints (MUST FOLLOW)
-
-* MUST NOT request, output, log, or commit secrets (API keys, passwords, private keys, session cookies, signing keys, database URLs with credentials).
-* MUST NOT “fix” security by disabling protections (e.g., weakening auth, making CORS permissive, skipping signature checks, disabling validation, turning off TLS verification, adding `allow_origins=["*"]` with credentials).
-* MUST provide **evidence-based findings** during audits: cite file paths, code snippets, and configuration values that justify the claim.
-* MUST treat uncertainty honestly: if a protection might exist in infrastructure (reverse proxy, WAF, CDN, service mesh), report it as “not visible in app code; verify at runtime/config”.
-* MUST treat browser controls correctly:
-
-  * CORS is **not** an auth mechanism; it only affects browsers.
-  * CSRF defenses apply when the browser automatically attaches credentials (cookies); they are usually not relevant for purely header-token APIs. ([OWASP Cheat Sheet Series][2])
-
----
-
-## 1) Operating modes
-
-### 1.1 Generation mode (default)
-
-When asked to write new FastAPI code or modify existing code:
-
-* MUST follow every **MUST** requirement in this spec.
-* SHOULD follow every **SHOULD** requirement unless the user explicitly says otherwise.
-* MUST prefer safe-by-default APIs and proven libraries over custom security code.
-* MUST avoid introducing new risky sinks (shell execution, unsafe deserialization, dynamic eval, untrusted template rendering, unsafe file serving, unsafe redirects, arbitrary outbound fetching).
-
-### 1.2 Passive review mode (always on while editing)
-
-While working anywhere in a FastAPI repo (even if the user did not ask for a security scan):
-
-* MUST “notice” violations of this spec in touched/nearby code.
-* SHOULD mention issues as they come up, with a brief explanation + safe fix.
-
-### 1.3 Active audit mode (explicit scan request)
-
-When the user asks to “scan”, “audit”, or “hunt for vulns”:
-
-* MUST systematically search the codebase for violations of this spec.
-* MUST output findings in a structured format (see §2.3).
-
-Recommended audit order:
+## FastAPI Audit Order
 
 1. App entrypoints / deployment scripts / Dockerfiles / Procfiles / Helm/terraform.
 2. ASGI server configuration (Uvicorn/Gunicorn), proxy settings, debug/reload settings.
@@ -64,7 +19,7 @@ Recommended audit order:
 
 ---
 
-## 2) Definitions and review guidance
+## FastAPI-Specific Definitions
 
 ### 2.1 Untrusted input (treat as attacker-controlled unless proven otherwise)
 
@@ -78,23 +33,6 @@ Examples include:
 * WebSocket messages, query params, and headers during handshake ([Starlette][3])
 * Any data from external systems (webhooks, third-party APIs, message queues)
 * Any persisted user content (DB rows) that originated from users
-
-### 2.2 State-changing request
-
-A request is state-changing if it can create/update/delete data, change auth/session state, trigger side effects (purchase, email send, webhook send), or initiate privileged actions.
-
-### 2.3 Required audit finding format
-
-For each issue found, output:
-
-* Rule ID:
-* Severity: Critical / High / Medium / Low
-* Location: file path + function/route name + line(s)
-* Evidence: the exact code/config snippet
-* Impact: what could go wrong, who can exploit it
-* Fix: safe change (prefer minimal diff)
-* Mitigation: defense-in-depth if immediate fix is hard
-* False positive notes: what to verify if uncertain
 
 ---
 

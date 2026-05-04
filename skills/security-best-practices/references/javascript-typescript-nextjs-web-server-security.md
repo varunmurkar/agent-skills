@@ -1,53 +1,12 @@
 # Next.js (TypeScript/JavaScript) Web Security Spec (Next.js 16.1.x, Node.js 20.9+)
 
-This document is designed as a **security spec** that supports:
+Read `_common-web-security-spec.md` first. This file adds Next.js-specific audit order, untrusted inputs, production baseline, rules, detection hints, and fixes.
 
-1. **Secure-by-default code generation** for new Next.js backend code (Route Handlers, API Routes, Server Actions, Proxy/Middleware).
-2. **Security review / vulnerability hunting** in existing Next.js repos (passive “notice issues while working” and active “scan the repo and report findings”).
+Target scope: Next.js **16.1.x** (latest line shown in App Router docs) ([Next.js][1]), running on Node.js **20.9+** (system requirements). ([Next.js][2])
 
-It is intentionally written as a set of **normative requirements** (“MUST/SHOULD/MAY”) plus **audit rules** (what bad patterns look like, how to detect them, and how to fix/mitigate them).
+Next.js-specific safety: assume request-facing server code is attacker-reachable unless clear auth boundary exists (not just absent UI link). TypeScript types are not security boundaries; runtime validation required. ([Next.js][3])
 
-Target scope: Next.js **16.1.x** (latest line shown in the App Router docs) ([Next.js][1]), running on Node.js **20.9+** (per Next.js system requirements). ([Next.js][2])
-
----
-
-## 0) Safety, boundaries, and anti-abuse constraints (MUST FOLLOW)
-
-* MUST NOT request, output, log, or commit secrets (API keys, passwords, private keys, session cookies, OAuth tokens, `process.env` dumps, database URLs with credentials).
-* MUST NOT “fix” security by disabling protections (e.g., disabling origin checks, relaxing CORS to `*`, skipping authz checks, turning off cookie security flags, turning off CSP because it’s “hard”).
-* MUST provide **evidence-based findings** during audits: cite file paths, code snippets, and configuration values that justify each claim.
-* MUST treat uncertainty honestly: if a protection might exist in infrastructure (reverse proxy, CDN, WAF, platform headers), report it as “not visible in app code; verify at runtime/config”.
-* MUST assume all request-facing server code is reachable by attackers unless there is a clearly enforced auth boundary (not just “the UI doesn’t link to it”).
-* MUST treat TypeScript types as **non-security boundaries**: types do not validate runtime input; runtime checks are required. ([Next.js][3])
-
----
-
-## 1) Operating modes
-
-### 1.1 Generation mode (default)
-
-When asked to write new Next.js code or modify existing code:
-
-* MUST follow every **MUST** requirement in this spec.
-* SHOULD follow every **SHOULD** requirement unless the user explicitly says otherwise.
-* MUST prefer safe-by-default APIs and proven libraries over custom security code.
-* MUST avoid introducing new risky sinks (dynamic code execution, unsafe redirects, serving user files as HTML, SSRF URL fetchers, building SQL strings, etc.).
-
-### 1.2 Passive review mode (always on while editing)
-
-While working anywhere in a Next.js repo (even if the user did not ask for a security scan):
-
-* MUST “notice” violations of this spec in touched/nearby code.
-* SHOULD mention issues as they come up, with a brief explanation + safe fix.
-
-### 1.3 Active audit mode (explicit scan request)
-
-When the user asks to “scan”, “audit”, or “hunt for vulns”:
-
-* MUST systematically search the codebase for violations of this spec.
-* MUST output findings in a structured format (see §2.3).
-
-Recommended audit order:
+## Next.js Audit Order
 
 1. Deployment entrypoints and environment (Dockerfiles, `package.json` scripts, hosting config).
 2. Next.js config (`next.config.*`), Proxy/Middleware, routing patterns.
@@ -63,7 +22,7 @@ Recommended audit order:
 
 ---
 
-## 2) Definitions and review guidance
+## Next.js-Specific Definitions
 
 ### 2.1 Untrusted input (treat as attacker-controlled unless proven otherwise)
 
@@ -89,26 +48,13 @@ Plus:
 * Anything from external systems (webhooks, third-party APIs, message queues)
 * Any persisted user content (DB rows) that originated from users
 
-### 2.2 State-changing request
+### 2.2 Next.js state-changing surfaces
 
 A request is state-changing if it can create/update/delete data, change auth/session state, trigger side effects (purchase, email send, webhook send), or initiate privileged actions.
 
 Special note for Next.js:
 
 * **Server Actions** are invoked via network requests and can mutate state; treat them as state-changing endpoints. ([Next.js][5])
-
-### 2.3 Required audit finding format
-
-For each issue found, output:
-
-* Rule ID:
-* Severity: Critical / High / Medium / Low
-* Location: file path + function/route name + line(s)
-* Evidence: the exact code/config snippet
-* Impact: what could go wrong, who can exploit it
-* Fix: safe change (prefer minimal diff)
-* Mitigation: defense-in-depth if immediate fix is hard
-* False positive notes: what to verify if uncertain
 
 ---
 

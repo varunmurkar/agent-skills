@@ -1,50 +1,10 @@
 # Django (Python) Web Security Spec (Django 6.0.x, Python 3.x)
 
-This document is designed as a **security spec** that supports:
+Read `_common-web-security-spec.md` first. This file adds Django-specific audit order, untrusted inputs, production baseline, rules, detection hints, and fixes.
 
-1. **Secure-by-default code generation** for new Django code.
-2. **Security review / vulnerability hunting** in existing Django code (passive “notice issues while working” and active “scan the repo and report findings”).
+Django-specific safety: keep fixes compatible with Django security model; prefer built-ins (middleware, auth, forms, ORM). Deployment checklist and system checks are part of intended model. ([Django Project][1])
 
-It is intentionally written as a set of **normative requirements** (“MUST/SHOULD/MAY”) plus **audit rules** (what bad patterns look like, how to detect them, and how to fix/mitigate them).
-
----
-
-## 0) Safety, boundaries, and anti-abuse constraints (MUST FOLLOW)
-
-* MUST NOT request, output, log, or commit secrets (API keys, passwords, private keys, session cookies, `SECRET_KEY`, `SECRET_KEY_FALLBACKS`, database passwords).
-* MUST NOT “fix” security by disabling protections (e.g., removing `CsrfViewMiddleware`, sprinkling `@csrf_exempt`, loosening `ALLOWED_HOSTS` to `['*']`, disabling `SecurityMiddleware`, disabling template auto-escaping, disabling permission checks).
-* MUST provide **evidence-based findings** during audits: cite file paths, code snippets, and concrete configuration values that justify the claim.
-* MUST treat uncertainty honestly: if a protection might exist in infrastructure (reverse proxy, WAF, CDN, ingress controller), report it as “not visible in app code; verify at runtime / edge config”.
-* MUST keep fixes compatible with Django’s intended security model: prefer Django’s built-ins (middleware, auth, forms, ORM) over custom security logic whenever possible. Django’s deployment checklist and system checks are part of the intended model. ([Django Project][1])
-
----
-
-## 1) Operating modes
-
-### 1.1 Generation mode (default)
-
-When asked to write new Django code or modify existing code:
-
-* MUST follow every **MUST** requirement in this spec.
-* SHOULD follow every **SHOULD** requirement unless the user explicitly says otherwise.
-* MUST prefer safe-by-default Django APIs and proven libraries over custom security code.
-* MUST avoid introducing new risky sinks (dynamic template rendering from untrusted strings, unsafe redirects, unsafe file serving, shell execution, raw SQL string formatting, SSRF-capable URL fetchers from untrusted input).
-
-### 1.2 Passive review mode (always on while editing)
-
-While working anywhere in a Django repo (even if the user did not ask for a security scan):
-
-* MUST “notice” violations of this spec in touched/nearby code.
-* SHOULD mention issues as they come up, with a brief explanation + safe fix.
-
-### 1.3 Active audit mode (explicit scan request)
-
-When the user asks to “scan”, “audit”, or “hunt for vulns”:
-
-* MUST systematically search the codebase for violations of this spec.
-* MUST output findings in a structured format (see §2.3).
-
-Recommended audit order:
+## Django Audit Order
 
 1. Deployment entrypoints (ASGI/WSGI), Dockerfiles, Procfiles, systemd units, platform manifests.
 2. `settings.py` and environment-specific settings modules.
@@ -60,7 +20,7 @@ Recommended audit order:
 
 ---
 
-## 2) Definitions and review guidance
+## Django-Specific Definitions
 
 ### 2.1 Untrusted input (treat as attacker-controlled unless proven otherwise)
 
@@ -75,23 +35,6 @@ Examples include:
 * Any persisted content that originated from users (DB rows, cached content, file uploads)
 
 Django explicitly emphasizes “never trust user-controlled data” and recommends using forms/validation. ([Django Project][2])
-
-### 2.2 State-changing request
-
-A request is state-changing if it can create/update/delete data, change auth/session state, trigger side effects (purchase, email send, webhook send), or initiate privileged actions.
-
-### 2.3 Required audit finding format
-
-For each issue found, output:
-
-* Rule ID:
-* Severity: Critical / High / Medium / Low
-* Location: file path + function/class/view name + line(s)
-* Evidence: the exact code/config snippet
-* Impact: what could go wrong, who can exploit it
-* Fix: safe change (prefer minimal diff)
-* Mitigation: defense-in-depth if immediate fix is hard
-* False positive notes: what to verify if uncertain
 
 ---
 

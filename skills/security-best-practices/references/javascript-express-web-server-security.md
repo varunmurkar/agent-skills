@@ -1,50 +1,8 @@
 # Express (Node.js) Web Security Spec (Express 5.x / 4.19.2+, Node.js LTS)
 
-This document is designed as a **security spec** that supports:
+Read `_common-web-security-spec.md` first. This file adds Express-specific audit order, untrusted inputs, production baseline, rules, detection hints, and fixes. Express expects app code to validate/handle user input correctly; it does not do this automatically. ([Express][1])
 
-1. **Secure-by-default code generation** for new Express apps and routes.
-2. **Security review / vulnerability hunting** in existing Express code (passive “notice issues while working” and active “scan the repo and report findings”).
-
-It is intentionally written as a set of **normative requirements** (“MUST/SHOULD/MAY”) plus **audit rules** (what bad patterns look like, how to detect them, and how to fix/mitigate them).
-
----
-
-## 0) Safety, boundaries, and anti-abuse constraints (MUST FOLLOW)
-
-* MUST NOT request, output, log, or commit secrets (API keys, passwords, private keys, session secrets, cookies, tokens).
-* MUST NOT “fix” security by disabling protections (e.g., weakening cookie flags, disabling CSRF defenses for cookie-authenticated apps, enabling permissive CORS, trusting proxy headers from the open internet, turning on debugging/stack traces in production, disabling TLS without a replacement).
-* MUST provide **evidence-based findings** during audits: cite file paths, code snippets, middleware/config values, and runtime assumptions that justify the claim.
-* MUST treat uncertainty honestly: if a protection might exist in infrastructure (reverse proxy, gateway, WAF, CDN), report it as “not visible in app code; verify at runtime/config.”
-* MUST prefer vetted libraries and platform controls over “roll your own” crypto/auth/session/CSRF. Express explicitly expects the application to validate/handle user input correctly; it does not do this automatically. ([Express][1])
-
----
-
-## 1) Operating modes
-
-### 1.1 Generation mode (default)
-
-When asked to write new Express code or modify existing code:
-
-* MUST follow every **MUST** requirement in this spec.
-* SHOULD follow every **SHOULD** requirement unless the user explicitly says otherwise.
-* MUST prefer safe-by-default APIs and proven libraries over custom security code.
-* MUST avoid introducing new risky sinks (shell execution, dynamic code evaluation, unsafe redirects, serving user files as HTML, template rendering from untrusted strings, unsafe filesystem paths, SSRF URL fetch endpoints, etc.).
-
-### 1.2 Passive review mode (always on while editing)
-
-While working anywhere in an Express repo (even if the user did not ask for a security scan):
-
-* MUST “notice” violations of this spec in touched/nearby code.
-* SHOULD mention issues as they come up, with a brief explanation + safe fix.
-
-### 1.3 Active audit mode (explicit scan request)
-
-When the user asks to “scan”, “audit”, or “hunt for vulns”:
-
-* MUST systematically search the codebase for violations of this spec.
-* MUST output findings in a structured format (see §2.3).
-
-Recommended audit order:
+## Express Audit Order
 
 1. Entrypoints (server/app bootstrap), deployment manifests, Dockerfiles, process manager config, CI/CD.
 2. Express settings + middleware stack order (helmet, parsers, auth, sessions, CSRF, CORS).
@@ -60,7 +18,7 @@ Recommended audit order:
 
 ---
 
-## 2) Definitions and review guidance
+## Express-Specific Definitions
 
 ### 2.1 Untrusted input (treat as attacker-controlled unless proven otherwise)
 
@@ -78,23 +36,6 @@ In Express, common untrusted inputs include:
 Special proxy note:
 
 * If `trust proxy` is enabled, values like `req.ip`, `req.hostname`, and `req.protocol` may be derived from `X-Forwarded-*` headers which **can be attacker-controlled** if your proxy chain is not correctly overwriting/removing them. ([Express][2])
-
-### 2.2 State-changing request
-
-A request is state-changing if it can create/update/delete data, change auth/session state, trigger side effects (purchase, email send, webhook send), or initiate privileged actions.
-
-### 2.3 Required audit finding format
-
-For each issue found, output:
-
-* Rule ID:
-* Severity: Critical / High / Medium / Low
-* Location: file path + function/route/middleware name + line(s)
-* Evidence: the exact code/config snippet
-* Impact: what could go wrong, who can exploit it
-* Fix: safe change (prefer minimal diff)
-* Mitigation: defense-in-depth if immediate fix is hard
-* False positive notes: what to verify if uncertain
 
 ---
 

@@ -14,11 +14,12 @@ Use guidance to write secure-by-default code, passively detect major issues, or 
 ## Workflow
 
 1. Identify ALL languages and ALL frameworks requested or present in project scope. Focus on primary core frameworks. For web apps, often identify both frontend and backend.
-2. Check `references/` for matching docs. Read ALL files relevant to specific language/framework. Filename shape: `<language>-<framework>-<stack>-security.md`.
-3. Also check `<language>-general-<stack>-security.md` for framework-agnostic guidance.
-4. For web apps with frontend + backend, check BOTH sides.
-5. If building web app and frontend framework unspecified, also read `javascript-general-web-frontend-security.md`.
-6. If no matching reference exists, use known language/framework security best practices. If producing report, state concrete guidance is unavailable; still report certain critical vulnerabilities if found.
+2. For any web security ref (`*-web-*-security.md`), read `references/_common-web-security-spec.md` first.
+3. Check `references/` for matching docs. Read ALL files relevant to specific language/framework. Filename shape: `<language>-<framework>-<stack>-security.md`.
+4. Also check `<language>-general-<stack>-security.md` for framework-agnostic guidance.
+5. For web apps with frontend + backend, check BOTH sides.
+6. If building web app and frontend framework unspecified, also read `javascript-general-web-frontend-security.md`.
+7. If no matching reference exists, use known language/framework security best practices. If producing report, state concrete guidance is unavailable; still report certain critical vulnerabilities if found.
 
 Modes:
 

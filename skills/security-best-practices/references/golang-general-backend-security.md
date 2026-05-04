@@ -1,43 +1,9 @@
 # Go (Golang) Security Spec (Go 1.25.x, Standard Library, net/http)
 
-This document is designed as a **security spec** that supports:
-1) **Secure-by-default code generation** for new Go code.
-2) **Security review / vulnerability hunting** in existing Go code (passive “notice issues while working” and active “scan the repo and report findings”).
+Read `_common-web-security-spec.md` first. This file adds Go-specific audit order, untrusted inputs, production baseline, rules, detection hints, and fixes.
 
-It is intentionally written as a set of **normative requirements** (“MUST/SHOULD/MAY”) plus **audit rules** (what bad patterns look like, how to detect them, and how to fix/mitigate them).
+## Go Audit Order
 
---------------------------------------------------------------------
-
-## 0) Safety, boundaries, and anti-abuse constraints (MUST FOLLOW)
-
-- MUST NOT request, output, log, or commit secrets (API keys, passwords, private keys, session cookies, JWTs, database URLs with credentials, signing keys, client secrets).
-- MUST NOT “fix” security by disabling protections (e.g., `InsecureSkipVerify`, `GOSUMDB=off` for public modules, wildcard CORS + credentials, removing auth checks, disabling CSRF defenses on cookie-auth apps).
-- MUST provide **evidence-based findings** during audits: cite file paths, code snippets, build/deploy configs, and concrete values that justify the claim.
-- MUST treat uncertainty honestly: if a control might exist in infrastructure (reverse proxy, WAF, service mesh, platform config), report it as “not visible in app code; verify at runtime/config.”
-- MUST keep fixes minimal, correct, and production-safe; avoid introducing breaking changes without warning (especially around auth/session flows, and proxies).
-
---------------------------------------------------------------------
-
-## 1) Operating modes
-
-### 1.1 Generation mode (default)
-When asked to write new Go code or modify existing code:
-- MUST follow every **MUST** requirement in this spec.
-- SHOULD follow every **SHOULD** requirement unless the user explicitly says otherwise.
-- MUST prefer safe-by-default APIs and proven libraries over custom security code.
-- MUST avoid introducing new risky sinks (shell execution, dynamic template execution, serving user files as HTML, unsafe redirects, weak crypto, unbounded parsing, etc.).
-
-### 1.2 Passive review mode (always on while editing)
-While working anywhere in a Go repo (even if the user did not ask for a security scan):
-- MUST “notice” violations of this spec in touched/nearby code.
-- SHOULD mention issues as they come up, with a brief explanation + safe fix.
-
-### 1.3 Active audit mode (explicit scan request)
-When the user asks to “scan”, “audit”, or “hunt for vulns”:
-- MUST systematically search the codebase for violations of this spec.
-- MUST output findings in a structured format (see §2.3).
-
-Recommended audit order:
 1) Build/deploy entrypoints: `main.go`, `cmd/*`, Dockerfiles, Kubernetes manifests, systemd units, CI workflows.
 2) Go toolchain & dependency policy: Go version, modules, `go.mod/go.sum`, proxy/sumdb settings, govulncheck usage.
 3) Secret management and config loading (env, files, secret stores) + logging patterns.
@@ -52,9 +18,7 @@ Recommended audit order:
 12) Debug/diagnostic endpoints (pprof/expvar/metrics) exposure.
 13) Cryptography usage (randomness, password hashing).
 
---------------------------------------------------------------------
-
-## 2) Definitions and review guidance
+## Go-Specific Definitions
 
 ### 2.1 Untrusted input (treat as attacker-controlled unless proven otherwise)
 Examples include:
@@ -64,21 +28,6 @@ Examples include:
 - Any data from external systems (webhooks, third-party APIs, message queues)
 - Any persisted user content (DB rows) that originated from users
 - Configuration values that might be attacker-influenced in some deployments (headers set by upstream proxies, environment variables in multi-tenant systems)
-
-### 2.2 State-changing request
-A request is state-changing if it can create/update/delete data, change auth/session state, trigger side effects (purchase, email send, webhook send), or initiate privileged actions.
-
-### 2.3 Required audit finding format
-For each issue found, output:
-
-- Rule ID:
-- Severity: Critical / High / Medium / Low
-- Location: file path + function/handler name + line(s)
-- Evidence: the exact code/config snippet
-- Impact: what could go wrong, who can exploit it
-- Fix: safe change (prefer minimal diff)
-- Mitigation: defense-in-depth if immediate fix is hard
-- False positive notes: what to verify if uncertain (edge configs, proxy behavior, auth assumptions)
 
 --------------------------------------------------------------------
 

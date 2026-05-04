@@ -217,60 +217,7 @@ After synthesis is approved, the implementer addresses agreed actions before the
 
 **STOP for escalation** if any action involves:
 
-| Trigger | Action |
-|---------|--------|
-| Design tradeoff | Present options A/B with pros/cons |
-| "By design" response | Don't dismiss - escalate to mediator |
-| Scope change | Confirm before proceeding |
-| Repeated issue (2+ rounds) | May indicate deeper problem |
-| Accepting limitation | Mediator decides, not implementer |
-| Architectural choice | Affects overall structure |
-
-**When triggers fire** - STOP and present decision:
-
-**Option 1: AskUserQuestion tool** (Claude Code)
-```
-AskUserQuestion({
-  questions: [{
-    question: "[Issue]? Stake: [what gets worse if wrong]",
-    header: "Design",
-    options: [
-      { label: "Option A (Recommended)", description: "[approach] - Pro: X, Con: Y" },
-      { label: "Option B", description: "[approach] - Pro: X, Con: Y" }
-    ],
-    multiSelect: false
-  }]
-})
-```
-
-**Option 2: Text template** (portable fallback)
-```
-DECISION POINT: [issue]
-Stake: [what gets worse if we choose wrong]
-
-Option A: [approach]
-- Pro: ...
-- Con: ...
-
-Option B: [approach]
-- Pro: ...
-- Con: ...
-
-Recommendation: [A/B] because [reasoning]
-
-Your call?
-```
-
-Wait for explicit response before proceeding. Log: `Approved: [decision] by [user]`
-
-**When no triggers fire** - state explicitly in synthesis:
-```
-Decision points: none this round.
-```
-
-This creates an auditable trace that the agent checked. Silence cannot masquerade as compliance.
-
-**Discretion expected.** The trigger list is intentionally tight. Don't escalate every minor choice - that defeats the purpose too. Escalate design tradeoffs that shape the outcome. When in doubt, escalate - it's better to over-communicate than to make unilateral design decisions.
+Use `../../engineering-core/references/human-decision-points.md`. STOP on listed triggers; mediator decides. Present AskUserQuestion or portable DECISION POINT template; wait for explicit approval; record `Decision points: none this round.` in synthesis when no triggers fire. Escalate design tradeoffs that shape outcome, not every minor choice.
 
 ### Starting the Next Round
 When beginning Round N+1, send targeted follow-ups. Ask for deltas on the updated artifact, not repeats.

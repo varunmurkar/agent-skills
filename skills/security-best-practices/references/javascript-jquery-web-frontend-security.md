@@ -1,53 +1,10 @@
 # jQuery Frontend Security Spec (jQuery 4.0.x, modern browsers)
 
-This document is designed as a **security spec** that supports:
+Read `_common-web-security-spec.md` first. This file adds jQuery-specific audit order, untrusted inputs, high-risk sinks, production baseline, rules, detection hints, and fixes.
 
-1. **Secure-by-default code generation** for new jQuery-based frontend code.
-2. **Security review / vulnerability hunting** in existing jQuery-based code (passive “notice issues while working” and active “scan the repo and report findings”).
+Browser trust model: frontend checks (UI gating, disabled buttons, hidden fields, client validation) are not authorization/security boundaries. Server-side authorization and validation must exist even if frontend is correct.
 
-It is intentionally written as a set of **normative requirements** (“MUST/SHOULD/MAY”) plus **audit rules** (what bad patterns look like, how to detect them, and how to fix/mitigate them).
-
----
-
-## 0) Safety, boundaries, and anti-abuse constraints (MUST FOLLOW)
-
-* MUST NOT request, output, log, or commit secrets (API keys, passwords, private keys, session tokens, refresh tokens, CSRF tokens, session cookies).
-* MUST treat the browser as an attacker-controlled environment:
-
-  * Frontend checks (UI gating, “disable button”, hidden fields, client-side validation) MUST NOT be treated as authorization or a security boundary.
-  * Server-side authorization and validation MUST exist even if frontend is “correct”.
-* MUST NOT “fix” security by disabling protections (e.g., relaxing CSP to allow `unsafe-inline`, enabling JSONP “because it works”, adding broad CORS, disabling sanitization, suppressing security checks).
-* MUST provide evidence-based findings during audits: cite file paths, code snippets, and relevant configuration values.
-* MUST treat uncertainty honestly: if a protection might exist at the edge (CDN/WAF/reverse proxy headers like CSP), report it as “not visible in repo; verify at runtime/config”.
-
----
-
-## 1) Operating modes
-
-### 1.1 Generation mode (default)
-
-When asked to write new jQuery code or modify existing jQuery code:
-
-* MUST follow every **MUST** requirement in this spec.
-* SHOULD follow every **SHOULD** requirement unless the user explicitly says otherwise.
-* MUST prefer safe-by-default patterns: text insertion, DOM node construction, allowlists, and proven sanitization libraries over custom escaping.
-* MUST avoid introducing new risky sinks (HTML string building, dynamic script loading, JSONP, inline script/event-handler attributes, unsafe URL assignment, unsafe object merging).
-
-### 1.2 Passive review mode (always on while editing)
-
-While working anywhere in a repo that uses jQuery (even if the user did not ask for a security scan):
-
-* MUST “notice” violations of this spec in touched/nearby code.
-* SHOULD mention issues as they come up, with a brief explanation + safe fix.
-
-### 1.3 Active audit mode (explicit scan request)
-
-When the user asks to “scan”, “audit”, or “hunt for vulns”:
-
-* MUST systematically search the codebase for violations of this spec.
-* MUST output findings in the structured format (see §2.3).
-
-Recommended audit order:
+## jQuery Audit Order
 
 1. jQuery sourcing, versions, and dependency hygiene (script tags, lockfiles, CDN usage, SRI).
 2. CSP / Trusted Types / security headers posture (in repo and at runtime if observable).
@@ -60,7 +17,7 @@ Recommended audit order:
 
 ---
 
-## 2) Definitions and review guidance
+## jQuery-Specific Definitions
 
 ### 2.1 Untrusted input (treat as attacker-controlled unless proven otherwise)
 
@@ -98,19 +55,6 @@ Key jQuery sink categories:
 
   * Assigning untrusted strings to `href`, `src`, `srcdoc`, `style`, or event-handler attributes (`onload`, `onclick`, etc.)
   * `javascript:` URLs are particularly dangerous and discouraged. ([MDN Web Docs][6])
-
-### 2.3 Required audit finding format
-
-For each issue found, output:
-
-* Rule ID:
-* Severity: Critical / High / Medium / Low
-* Location: file path + function/component + line(s)
-* Evidence: the exact code/config snippet
-* Impact: what could go wrong, who can exploit it
-* Fix: safe change (prefer minimal diff)
-* Mitigation: defense-in-depth if immediate fix is hard
-* False positive notes: what to verify if uncertain
 
 ---
 
