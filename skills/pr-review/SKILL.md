@@ -32,6 +32,7 @@ Provide one reusable PR/code review procedure while letting project overlays def
    - Resolve active project playbook/overlays.
    - Run deterministic gates first: tests, lint/static analysis, typecheck/build, format check, and configured security scanners.
    - Run AI review gates after deterministic gates when configured.
+   - If the AI review gate is CodeRabbit, or the user explicitly asks to run CodeRabbit/`cr review`, load `references/coderabbit-gate.md`.
    - Do not run CodeRabbit twice for verification.
 
 3. Code quality, DRY/SOLID, and conventions
@@ -78,6 +79,7 @@ Provide one reusable PR/code review procedure while letting project overlays def
    - Classify each suggestion as `accept`, `reject`, or `defer`.
    - Evaluate against correctness, project conventions, regression risk, and test impact.
    - For CodeRabbit specifically:
+     - Load `references/coderabbit-gate.md` before invoking the CLI.
      - Default to prompt-efficient mode when available (for example `--prompt-only`).
      - Use expanded/plain mode only when detailed human-readable output is explicitly required.
 

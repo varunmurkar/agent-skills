@@ -72,9 +72,10 @@ The installer is intentionally interactive when it finds collisions.
 ## What gets installed
 
 For `--scope user`, skills are installed once into the agent-compatible global
-skills directory:
+agent directory:
 
 - `~/.agents/skills/<skill>/SKILL.md`
+- `~/.agents/AGENTS.md`
 
 Codex and OpenCode read that location directly. Claude Code also gets
 compatibility symlinks under `~/.claude/skills/`.
@@ -85,6 +86,7 @@ compatibility symlinks under `~/.claude/skills/`.
   - project: `.agents/skills/<skill>/SKILL.md`
   - user: `~/.agents/skills/<skill>/SKILL.md`
 - Guidance:
+  - global: `~/.agents/AGENTS.md`
   - project: `AGENTS.md`
   - user: `${CODEX_HOME:-~/.codex}/AGENTS.md`
 
@@ -95,6 +97,7 @@ compatibility symlinks under `~/.claude/skills/`.
   - user: `~/.agents/skills/<skill>/SKILL.md`
   - user compatibility: `~/.claude/skills/<skill>` symlink
 - Guidance:
+  - global: `~/.agents/AGENTS.md`
   - project: `CLAUDE.md`
   - user: `~/.claude/CLAUDE.md`
 
@@ -104,6 +107,7 @@ compatibility symlinks under `~/.claude/skills/`.
   - project: `.opencode/skills/<skill>/SKILL.md`
   - user: `~/.agents/skills/<skill>/SKILL.md`
 - Guidance:
+  - global: `~/.agents/AGENTS.md`
   - project: `AGENTS.md`
   - user: `~/.config/opencode/AGENTS.md`
 

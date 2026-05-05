@@ -8,6 +8,7 @@ readonly REPO_ROOT="$(cd -- "${SCRIPT_DIR}/.." && pwd -P)"
 readonly SOURCE_SKILLS_DIR="${REPO_ROOT}/skills"
 readonly SOURCE_AGENTS_FILE="${REPO_ROOT}/AGENTS.md"
 readonly CODEX_HOME_DIR="${CODEX_HOME:-${HOME}/.codex}"
+readonly USER_AGENTS_DIR="${HOME}/.agents"
 readonly USER_AGENTS_SKILLS_DIR="${HOME}/.agents/skills"
 readonly INSTALL_USER_ID="${USER:-user}"
 
@@ -592,6 +593,20 @@ install_user_agents_guidance() {
   install_instruction_file "${target_file}" "${companion_file}" "agent-skills/AGENTS.md" "${generated_file}" "agents"
 }
 
+install_global_user_agents_guidance() {
+  local generated_file="${TMP_DIR}/user-global-AGENTS.md"
+  write_doctrine_content \
+    "${generated_file}" \
+    "$(doctrine_communication_ref "codex-user")" \
+    "$(doctrine_hint_for_agents "codex-user")"
+  install_instruction_file \
+    "${USER_AGENTS_DIR}/AGENTS.md" \
+    "${USER_AGENTS_DIR}/agent-skills/AGENTS.md" \
+    "agent-skills/AGENTS.md" \
+    "${generated_file}" \
+    "agents"
+}
+
 install_claude_guidance() {
   local target_file="$1"
   local companion_file="$2"
@@ -829,6 +844,12 @@ if [[ "${SCOPE}" == "project" ]]; then
       "${TMP_DIR}/project-CLAUDE.md"
   fi
 else
+  if array_contains "codex" "${SELECTED_RUNTIME_TOOLS[@]}" || \
+     array_contains "claude" "${SELECTED_RUNTIME_TOOLS[@]}" || \
+     array_contains "opencode" "${SELECTED_RUNTIME_TOOLS[@]}"; then
+    install_global_user_agents_guidance
+  fi
+
   if array_contains "codex" "${SELECTED_RUNTIME_TOOLS[@]}"; then
     install_user_agents_guidance \
       "${CODEX_HOME_DIR}/AGENTS.md" \
