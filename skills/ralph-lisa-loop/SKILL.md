@@ -5,7 +5,9 @@ description: |
   for planning/implementation and self-review, Codex for external review. The human steers.
   A single rope-length knob (0-5) controls interruption frequency. Subagent architecture
   keeps the orchestrator's context window lean for completing tasks in a single session.
-  Use for any planning, development, or implementation task that benefits from structured review.
+  Use only when the user explicitly requests the ralph-lisa loop, an automated
+  plan-implement-review loop, or walk-away execution with expert review. Do not
+  trigger for generic planning, building, implementation, or review requests.
 triggers:
   # Direct invocations
   - /ralph-lisa-loop
@@ -14,38 +16,21 @@ triggers:
   - ralph-lisa loop
   - ralph loop
   - ralph lisa
-  # Planning
-  - plan this
-  - let's plan
-  - make a plan
+  # Explicit loop modes
   - plan with expert
   - plan and build
   - plan-implement cycle
   - plan then implement
   - plan then build
-  # Plan-only
-  - plan only
-  - just plan
-  - design review
-  - RFC review
-  # Development / implementation
-  - build this
-  - implement this
   - implement with expert
   - build with expert review
-  # Implement-only
-  - just implement
-  - just build
-  - skip planning
-  # Codex review
-  - codex review
-  - get codex to review
-  - have codex review
-  - review with codex
+  - plan implement review loop
+  - plan build review loop
   - expert review loop
   # Automation emphasis
   - automated review loop
   - autonomous review loop
+  - walk-away execution
 ---
 
 # ralph-lisa-loop

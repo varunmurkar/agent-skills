@@ -20,6 +20,7 @@ Use guidance to write secure-by-default code, passively detect major issues, or 
 5. For web apps with frontend + backend, check BOTH sides.
 6. If building web app and frontend framework unspecified, also read `javascript-general-web-frontend-security.md`.
 7. If no matching reference exists, use known language/framework security best practices. If producing report, state concrete guidance is unavailable; still report certain critical vulnerabilities if found.
+8. If scope includes GitHub Actions workflows, CI permissions, action pinning, or zizmor findings, load `../harden-github-actions/SKILL.md` for the workflow-specific hardening rules.
 
 Modes:
 

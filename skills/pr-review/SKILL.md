@@ -42,10 +42,15 @@ Provide one reusable PR/code review procedure while letting project overlays def
 4. Security
    - For explicit security review/hardening requests, load `../security-best-practices/SKILL.md`.
    - For general review, flag obvious high-impact security issues and run configured security gates.
+   - If the diff touches `.github/workflows/*`, GitHub Actions permissions, action pinning, or zizmor findings, load `../harden-github-actions/SKILL.md`.
 
 5. PRD/spec drift
    - If user asks for PRD/spec drift, requirements alignment, invariants, or spec-vs-code review, load `../check-drift/SKILL.md`.
    - Keep drift checks read-only and report-only.
+
+6. External second opinion
+   - If user explicitly asks for an outside/external expert, Codex second opinion, or consultation loop, load `../consult-outside-expert/SKILL.md`.
+   - Do not route ordinary PR/code review requests to external consultation.
 
 ## Procedure
 
@@ -98,3 +103,4 @@ Provide one reusable PR/code review procedure while letting project overlays def
 - If tools conflict, prioritize security and correctness over style.
 - Do not run coderabbit a second time to verify, rate limits will block.
 - Do not route fresh review requests to any other review skill unless the request is specifically about existing PR comments/threads.
+- External expert review is opt-in only; `pr-review` owns broad review phrasing.

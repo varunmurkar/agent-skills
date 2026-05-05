@@ -1,10 +1,10 @@
 ---
 name: spec
 description: |
-  Create, amend, or backprop bugs into SPEC.md at repo root. Sole mutator
-  of the project spec. Triggers when the user asks to write a spec, start
-  a new spec, distill a spec from existing code, add invariants, amend
-  sections (§G, §C, §I, §V, §T, §B), or record a bug via backprop.
+  Create, amend, or record bugs in SPEC.md at repo root. Sole mutator of
+  the project spec. Triggers when the user asks to write a spec, start a
+  new spec, distill a spec from existing code, add invariants, amend
+  sections (§G, §C, §I, §V, §T, §B), or record a bug with `bug:`.
   Common phrasings: "write the spec for...", "new spec", "bug: ...",
   "amend §V.3", "distill spec from code", "spec this idea". Reads and
   follows FORMAT.md for the caveman encoding rules and pipe-table shape
@@ -48,6 +48,8 @@ Caveman everywhere. Flag uncertain items with `?` in text so user can confirm.
 ## BACKPROP — bug → §B + §V
 
 Input: `bug: <description>`.
+
+Use `../backprop/SKILL.md` for the failure-analysis protocol. This skill owns SPEC.md mutation.
 
 Steps:
 1. Parse bug description.

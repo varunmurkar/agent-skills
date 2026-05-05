@@ -1,10 +1,11 @@
 ---
 name: backprop
 description: |
-  Bug → spec protocol. When a bug is found or a test fails, trace the cause,
-  decide whether a new §V invariant would catch recurrence, append to §B.
-  This is the one non-obvious thing SDD does that plan-then-execute doesn't.
-  Triggers on test failure, bug report, post-mortem, or explicit user ask.
+  Internal/explicit bug-to-spec analysis protocol. When a verification failure,
+  post-mortem, or drift violation needs recurrence prevention, trace the cause
+  and decide whether a new §V invariant would catch recurrence. Triggers on
+  explicit backprop asks, build verification failure, post-mortem backprop, or
+  check-drift violation with root cause. Direct `bug:` requests route to spec.
 ---
 
 # backprop — bug → spec
@@ -16,9 +17,10 @@ That edit is backprop.
 ## WHEN TO BACKPROP
 
 - Test failed at `/build` verification.
-- User reports bug.
-- Post-mortem after production incident.
+- User explicitly asks to backprop a failure.
+- Post-mortem after production incident asks for backprop.
 - `/check-drift` flags VIOLATE with root cause found.
+- Direct `bug:` dispatch belongs to `../spec/SKILL.md`, the sole SPEC.md mutator.
 
 ## SIX STEPS
 

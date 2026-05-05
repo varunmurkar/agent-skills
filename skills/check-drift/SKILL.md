@@ -3,7 +3,7 @@ name: check-drift
 description: |
   Read-only PRD/SPEC drift detector. Diffs SPEC.md against current code and
   reports violations grouped by severity. Writes nothing — suggests remedies
-  via the spec or build skills but never invokes them. Triggers when the user
+  via spec or build commands but never invokes them. Triggers when the user
   asks to check drift, audit the spec, verify invariants, check PRD drift,
   review requirements drift, or ask whether code still matches the spec.
   Phrasings: "check drift", "audit the spec", "does the code still match §V",
@@ -70,13 +70,13 @@ T3 STALE: status `x`, no middleware file exists.
 
 ## summary
 2 violate. 1 missing. 1 stale. 1 unverifiable.
-next: spec skill with `bug:` or fix code at cited lines.
+next: after root cause known, run `spec bug: <cause>` or fix code at cited lines.
 ```
 
 ## REMEDY HINTS (not actions)
 
 End report with one-line hint per class:
-- VIOLATE / DRIFT → invoke spec skill `bug: <V.n>` or fix code.
+- VIOLATE / DRIFT → after root cause known, run `spec bug: <cause>` or fix code.
 - MISSING → invoke build skill on `§T.n` if task exists; else spec skill `amend §T`.
 - STALE → spec skill `amend §T` to uncheck.
 - EXTRA → spec skill `amend §I` to document, or delete code.

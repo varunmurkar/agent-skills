@@ -16,15 +16,14 @@ Core workflow:
 
 Spec-driven development:
 
-- `spec`
-- `build`
-- `check-drift`
-- `backprop`
+- `spec` — SPEC.md create/amend/bug recording
+- `build` — implement SPEC.md tasks
+- `check-drift` — read-only spec/PRD drift
+- `backprop` — failure-to-invariant protocol
 
 Caveman ecosystem:
 
 - `caveman`
-- `compress`
 
 Commit tooling:
 

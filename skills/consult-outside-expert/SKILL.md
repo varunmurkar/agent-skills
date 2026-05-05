@@ -3,27 +3,29 @@ name: consult-outside-expert
 description: |
   Get a second opinion via Codex MCP. Use for stress-testing ideas, getting fresh perspective,
   steelmanning arguments, or iteratively refining work through expert back-and-forth.
-  Invoke for ANY request involving external review, feedback, or consultation.
+  Invoke only when the user explicitly asks for an outside/external expert,
+  Codex-as-second-opinion, or a consultation loop. Do not trigger for generic
+  code review, PR review, drift checks, or normal "review my work" requests.
 triggers:
   # Direct invocations
   - consult outside expert
   - outside expert
   - /consult
   # Codex-specific
-  - codex
   - ask codex
-  - use codex
+  - ask codex for a second opinion
+  - use codex as reviewer
   - codex sparring
-  - codex review
+  - codex second opinion
   - codex feedback
   # Expert consultation
   - expert consultation
-  - expert review
+  - outside expert review
   - expert feedback
   - get expert input
   - external consultation
-  - external review
-  - outside review
+  - external expert review
+  - outside expert feedback
   # Second opinion / fresh perspective
   - second opinion
   - another perspective
@@ -39,13 +41,10 @@ triggers:
   - gut check
   - sense check
   - validate my thinking
-  - check my work
-  - review my approach
   # Informal / conversational
   - bounce this off
   - run this by
-  - get feedback on
-  - what do you think about
+  - get outside feedback on
   # Refinement / convergence
   - cross-agent refinement
   - dual-agent convergence
@@ -56,10 +55,6 @@ triggers:
   - can I consult
   - how do I get expert
   - should I consult
-  - is there a way to get review
-  - what is codex
-  - does codex
-  - how does codex work
 ---
 
 # consult-outside-expert
@@ -71,6 +66,9 @@ Use outside expert to refine work through iterative back-and-forth. Use for:
 - stress-test from different angle
 - steelmanning ideas
 - progressive convergence on best outcome
+
+Do not use for fresh PR/code reviews. Use `../pr-review/SKILL.md` unless the
+user explicitly asks for an external/second-opinion reviewer.
 
 Guide contains:
 - consultation loop + mediator role
