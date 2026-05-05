@@ -43,6 +43,9 @@ For Supabase tasks touching auth, RLS, views, storage, or user data, check these
 
 For other security concerns, fetch Supabase product security index: `https://supabase.com/docs/guides/security/product-security.md`
 
+**6. Use the neutral Postgres specialist for database optimization.**
+For SQL queries, schema design, indexes, RLS performance, connection pooling, query tuning, locks, or Postgres diagnostics, also load `../postgres-best-practices/SKILL.md`.
+
 ## Supabase CLI
 
 Discover commands via `--help`; never guess. CLI changes by version.

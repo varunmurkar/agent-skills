@@ -33,7 +33,7 @@ Security and platform:
 - `security-best-practices`
 - `harden-github-actions`
 - `supabase`
-- `supabase-postgres-best-practices`
+- `postgres-best-practices`
 
 Skill authoring:
 
@@ -70,6 +70,14 @@ The installer is intentionally interactive when it finds collisions.
 
 ## What gets installed
 
+For `--scope user`, skills are installed once into the agent-compatible global
+skills directory:
+
+- `~/.agents/skills/<skill>/SKILL.md`
+
+Codex and OpenCode read that location directly. Claude Code also gets
+compatibility symlinks under `~/.claude/skills/`.
+
 ### Codex
 
 - Skills:
@@ -83,7 +91,8 @@ The installer is intentionally interactive when it finds collisions.
 
 - Skills:
   - project: `.claude/skills/<skill>/SKILL.md`
-  - user: `~/.claude/skills/<skill>/SKILL.md`
+  - user: `~/.agents/skills/<skill>/SKILL.md`
+  - user compatibility: `~/.claude/skills/<skill>` symlink
 - Guidance:
   - project: `CLAUDE.md`
   - user: `~/.claude/CLAUDE.md`
@@ -92,7 +101,7 @@ The installer is intentionally interactive when it finds collisions.
 
 - Skills:
   - project: `.opencode/skills/<skill>/SKILL.md`
-  - user: `~/.config/opencode/skills/<skill>/SKILL.md`
+  - user: `~/.agents/skills/<skill>/SKILL.md`
 - Guidance:
   - project: `AGENTS.md`
   - user: `~/.config/opencode/AGENTS.md`
@@ -177,4 +186,4 @@ Open the project in Cursor after installing the generated `.cursor/rules/*.mdc` 
 
 - The installer does not fetch anything from the network.
 - The repository no longer ships the old `.system` helper skills; it only contains the reusable top-level skills.
-- The generated project and user guidance rewrites the root `AGENTS.md` references so they point at the installed `engineering-core` skill instead of the old `agent-os` paths.
+- The generated project and user guidance rewrites the root `AGENTS.md` skill-path references so they point at the active installed skill path.

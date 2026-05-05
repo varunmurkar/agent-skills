@@ -29,7 +29,7 @@ Single source-of-truth for reusable engineering guidance across projects.
 8. Load `references/analytics-monitoring-core.md` only when telemetry/observability touched.
 9. Load `references/tenant-isolation-conditional.md` only when tenant guidance enabled.
 10. Load `references/compliance-conditional.md` only when compliance guidance enabled.
-11. If task includes Postgres DB/schema/migration/query design, load `../supabase-postgres-best-practices/SKILL.md` before final implementation decisions.
+11. If task includes Postgres DB/schema/migration/query design, load `../postgres-best-practices/SKILL.md` before final implementation decisions.
 
 ## Multi-Tenant Detection Signals
 

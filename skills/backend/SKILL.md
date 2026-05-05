@@ -14,8 +14,8 @@ Backend engineering guidance for API design, migrations, models, and query behav
 3. Load `references/migrations-core.md` for schema evolution work.
 4. Load `references/models-core.md` for domain model and persistence rules.
 5. Load `references/querying-core.md` when writing/optimizing queries.
-6. When work touches database schema/tables/migrations/queries and the project uses Postgres, load `../supabase-postgres-best-practices/SKILL.md` and the relevant `references/schema-*`, `references/query-*`, `references/security-*`, and `references/data-*` files.
-7. For DB work, treat the Supabase/Postgres references as required quality gates for:
+6. When work touches database schema/tables/migrations/queries and the project uses Postgres, load `../postgres-best-practices/SKILL.md` and the relevant `references/schema-*`, `references/query-*`, `references/security-*`, and `references/data-*` files.
+7. For DB work, treat the Postgres references as required quality gates for:
    - schema/table design and constraints
    - migration safety and rollback strategy
    - query/index performance

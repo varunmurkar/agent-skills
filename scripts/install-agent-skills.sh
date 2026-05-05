@@ -8,6 +8,8 @@ readonly REPO_ROOT="$(cd -- "${SCRIPT_DIR}/.." && pwd -P)"
 readonly SOURCE_SKILLS_DIR="${REPO_ROOT}/skills"
 readonly SOURCE_AGENTS_FILE="${REPO_ROOT}/AGENTS.md"
 readonly CODEX_HOME_DIR="${CODEX_HOME:-${HOME}/.codex}"
+readonly USER_AGENTS_SKILLS_DIR="${HOME}/.agents/skills"
+readonly INSTALL_USER_ID="${USER:-user}"
 
 AVAILABLE_SKILLS=()
 
@@ -139,6 +141,18 @@ discover_available_skills() {
   mapfile -t AVAILABLE_SKILLS < <(printf '%s\n' "${discovered[@]}" | sort)
 }
 
+validate_requested_inputs() {
+  local item
+
+  for item in "${REQUESTED_TOOLS[@]}"; do
+    validate_tool "${item}"
+  done
+
+  for item in "${REQUESTED_SKILLS[@]}"; do
+    validate_skill "${item}"
+  done
+}
+
 resolve_project_root() {
   [[ -d "${PROJECT_ROOT_INPUT}" ]] || die "Project root does not exist: ${PROJECT_ROOT_INPUT}"
   (cd -- "${PROJECT_ROOT_INPUT}" && pwd -P)
@@ -184,6 +198,23 @@ prompt_instruction_collision_action() {
   done
 }
 
+prompt_compat_link_collision_action() {
+  local target_path="$1"
+  local response
+  if [[ "${REPLACE_ALL}" == "true" ]]; then
+    printf 'replace\n'
+    return
+  fi
+  ensure_interactive
+  while true; do
+    read -r -p "Compatibility link collision at ${target_path}. Choose re[p]lace or [s]kip: " response
+    case "${response,,}" in
+      p|replace) printf 'replace\n'; return ;;
+      s|skip) printf 'skip\n'; return ;;
+    esac
+  done
+}
+
 prompt_new_name() {
   local original_name="$1"
   local candidate
@@ -205,11 +236,11 @@ skill_root_for_tool() {
   local project_root="$2"
   case "${tool}:${SCOPE}" in
     codex:project) printf '%s/.agents/skills\n' "${project_root}" ;;
-    codex:user) printf '%s/.agents/skills\n' "${HOME}" ;;
+    codex:user) printf '%s\n' "${USER_AGENTS_SKILLS_DIR}" ;;
     claude:project) printf '%s/.claude/skills\n' "${project_root}" ;;
-    claude:user) printf '%s/.claude/skills\n' "${HOME}" ;;
+    claude:user) printf '%s\n' "${USER_AGENTS_SKILLS_DIR}" ;;
     opencode:project) printf '%s/.opencode/skills\n' "${project_root}" ;;
-    opencode:user) printf '%s/.config/opencode/skills\n' "${HOME}" ;;
+    opencode:user) printf '%s\n' "${USER_AGENTS_SKILLS_DIR}" ;;
     *) die "Unsupported skill root lookup for ${tool}:${SCOPE}" ;;
   esac
 }
@@ -264,6 +295,42 @@ install_skill_directory() {
   else
     info "Installed ${source_name} to ${destination_dir}."
   fi
+}
+
+install_skill_compat_link() {
+  local source_name="$1"
+  local link_root="$2"
+  local canonical_dir="${USER_AGENTS_SKILLS_DIR}/${source_name}"
+  local link_path="${link_root}/${source_name}"
+  local current_target
+  local action
+
+  [[ -d "${canonical_dir}" ]] || die "Missing canonical user skill: ${canonical_dir}"
+  mkdir -p -- "${link_root}"
+
+  while [[ -e "${link_path}" || -L "${link_path}" ]]; do
+    if [[ -L "${link_path}" ]]; then
+      current_target="$(readlink -- "${link_path}")"
+      if [[ "${current_target}" == "${canonical_dir}" ]]; then
+        info "Compatibility link already exists at ${link_path}."
+        return
+      fi
+    fi
+
+    action="$(prompt_compat_link_collision_action "${link_path}")"
+    case "${action}" in
+      replace)
+        rm -rf -- "${link_path}"
+        ;;
+      skip)
+        info "Skipped compatibility link ${link_path}."
+        return
+        ;;
+    esac
+  done
+
+  ln -s -- "${canonical_dir}" "${link_path}"
+  info "Linked ${link_path} to ${canonical_dir}."
 }
 
 extract_skill_description() {
@@ -364,20 +431,62 @@ doctrine_hint_for_agents() {
     codex) printf '`./.agents/skills/engineering-core/SKILL.md`' ;;
     opencode) printf '`./.opencode/skills/engineering-core/SKILL.md`' ;;
     codex+opencode) printf '`./.agents/skills/engineering-core/SKILL.md` or `./.opencode/skills/engineering-core/SKILL.md`' ;;
-    codex-user) printf '`~/.agents/skills/engineering-core/SKILL.md`' ;;
-    opencode-user) printf '`~/.config/opencode/skills/engineering-core/SKILL.md`' ;;
+    codex-user|opencode-user|claude-user) printf '`~/.agents/skills/engineering-core/SKILL.md`' ;;
     claude-project) printf '`./.claude/skills/engineering-core/SKILL.md`' ;;
-    claude-user) printf '`~/.claude/skills/engineering-core/SKILL.md`' ;;
     cursor) printf 'the generated `engineering-core.mdc` rule in `.cursor/rules/`' ;;
     *) die "Unsupported doctrine hint key: ${key}" ;;
   esac
 }
 
+doctrine_communication_ref() {
+  local key="$1"
+  case "${key}" in
+    codex) printf '`./.agents/skills/caveman/SKILL.md`' ;;
+    opencode) printf '`./.opencode/skills/caveman/SKILL.md`' ;;
+    codex+opencode) printf '`./.agents/skills/caveman/SKILL.md` or `./.opencode/skills/caveman/SKILL.md`' ;;
+    codex-user|opencode-user|claude-user) printf '`~/.agents/skills/caveman/SKILL.md`' ;;
+    claude-project) printf '`./.claude/skills/caveman/SKILL.md`' ;;
+    cursor) printf 'the generated `caveman.mdc` rule in `.cursor/rules/`' ;;
+    *) die "Unsupported doctrine communication key: ${key}" ;;
+  esac
+}
+
+render_doctrine_body() {
+  local source_file="$1"
+  local communication_ref="$2"
+  local install_user_id="$3"
+  awk -v communication_ref="${communication_ref}" -v install_user_id="${install_user_id}" '
+    /^## Installed Skill Paths[[:space:]]*$/ {
+      skipping_installed_paths = 1
+      next
+    }
+    skipping_installed_paths && /^## / {
+      skipping_installed_paths = 0
+    }
+    skipping_installed_paths {
+      next
+    }
+    $0 == "## Communication" {
+      print
+      if (getline > 0) {
+        print communication_ref
+      }
+      next
+    }
+    $0 ~ /^- Tool: mem0 MCP\. User ID:/ {
+      print "- Tool: mem0 MCP. User ID: `" install_user_id "`"
+      next
+    }
+    { print }
+  ' "${source_file}"
+}
+
 write_doctrine_content() {
   local target_file="$1"
-  local doctrine_hint="$2"
+  local communication_ref="$2"
+  local doctrine_hint="$3"
   {
-    cat -- "${SOURCE_AGENTS_FILE}"
+    render_doctrine_body "${SOURCE_AGENTS_FILE}" "${communication_ref}" "${INSTALL_USER_ID}"
     cat <<EOF
 
 ## Installed Skill Paths
@@ -459,7 +568,10 @@ install_project_agents_guidance() {
   local project_root="$1"
   local hint_key="$2"
   local generated_file="${TMP_DIR}/project-AGENTS.md"
-  write_doctrine_content "${generated_file}" "$(doctrine_hint_for_agents "${hint_key}")"
+  write_doctrine_content \
+    "${generated_file}" \
+    "$(doctrine_communication_ref "${hint_key}")" \
+    "$(doctrine_hint_for_agents "${hint_key}")"
   install_instruction_file \
     "${project_root}/AGENTS.md" \
     "${project_root}/.agent-skills/AGENTS.md" \
@@ -473,7 +585,10 @@ install_user_agents_guidance() {
   local companion_file="$2"
   local hint_key="$3"
   local generated_file="$4"
-  write_doctrine_content "${generated_file}" "$(doctrine_hint_for_agents "${hint_key}")"
+  write_doctrine_content \
+    "${generated_file}" \
+    "$(doctrine_communication_ref "${hint_key}")" \
+    "$(doctrine_hint_for_agents "${hint_key}")"
   install_instruction_file "${target_file}" "${companion_file}" "agent-skills/AGENTS.md" "${generated_file}" "agents"
 }
 
@@ -487,7 +602,10 @@ install_claude_guidance() {
     relative_companion="./.agent-skills/CLAUDE.md"
   fi
 
-  write_doctrine_content "${generated_file}" "$(doctrine_hint_for_agents "${hint_key}")"
+  write_doctrine_content \
+    "${generated_file}" \
+    "$(doctrine_communication_ref "${hint_key}")" \
+    "$(doctrine_hint_for_agents "${hint_key}")"
   install_instruction_file "${target_file}" "${companion_file}" "${relative_companion}" "${generated_file}" "claude"
 }
 
@@ -507,7 +625,7 @@ alwaysApply: true
 Generated from \`agent-skills/AGENTS.md\` for Cursor.
 
 EOF
-    cat -- "${SOURCE_AGENTS_FILE}"
+    render_doctrine_body "${SOURCE_AGENTS_FILE}" "$(doctrine_communication_ref cursor)" "${INSTALL_USER_ID}"
     cat <<EOF
 
 ## Installed Skill Paths
@@ -635,6 +753,7 @@ build_selected_skills() {
 parse_args "$@"
 validate_scope
 discover_available_skills
+validate_requested_inputs
 
 PROJECT_ROOT="$(resolve_project_root)"
 mapfile -t SELECTED_RUNTIME_TOOLS < <(build_selected_tools)
@@ -651,27 +770,47 @@ info "Scope: ${SCOPE}"
 info "Tools: ${SELECTED_RUNTIME_TOOLS[*]}"
 info "Skills: ${SELECTED_SKILLS[*]}"
 
-for tool in "${SELECTED_RUNTIME_TOOLS[@]}"; do
-  case "${tool}" in
-    codex|claude|opencode)
-      skill_root="$(skill_root_for_tool "${tool}" "${PROJECT_ROOT}")"
-      for skill_name in "${SELECTED_SKILLS[@]}"; do
-        install_skill_directory "${skill_name}" "${skill_root}"
-      done
-      ;;
-    cursor)
-      if [[ "${SCOPE}" == "project" ]]; then
+if [[ "${SCOPE}" == "user" ]]; then
+  if array_contains "codex" "${SELECTED_RUNTIME_TOOLS[@]}" || \
+     array_contains "claude" "${SELECTED_RUNTIME_TOOLS[@]}" || \
+     array_contains "opencode" "${SELECTED_RUNTIME_TOOLS[@]}"; then
+    for skill_name in "${SELECTED_SKILLS[@]}"; do
+      install_skill_directory "${skill_name}" "${USER_AGENTS_SKILLS_DIR}"
+    done
+  fi
+
+  if array_contains "claude" "${SELECTED_RUNTIME_TOOLS[@]}"; then
+    for skill_name in "${SELECTED_SKILLS[@]}"; do
+      install_skill_compat_link "${skill_name}" "${HOME}/.claude/skills"
+    done
+  fi
+
+  if array_contains "cursor" "${SELECTED_RUNTIME_TOOLS[@]}"; then
+    cursor_rule_root="${HOME}/.cursor/rules"
+    install_cursor_doctrine_rule "${cursor_rule_root}"
+    for skill_name in "${SELECTED_SKILLS[@]}"; do
+      install_cursor_rule "${skill_name}" "${cursor_rule_root}"
+    done
+  fi
+else
+  for tool in "${SELECTED_RUNTIME_TOOLS[@]}"; do
+    case "${tool}" in
+      codex|claude|opencode)
+        skill_root="$(skill_root_for_tool "${tool}" "${PROJECT_ROOT}")"
+        for skill_name in "${SELECTED_SKILLS[@]}"; do
+          install_skill_directory "${skill_name}" "${skill_root}"
+        done
+        ;;
+      cursor)
         cursor_rule_root="${PROJECT_ROOT}/.cursor/rules"
-      else
-        cursor_rule_root="${HOME}/.cursor/rules"
-      fi
-      install_cursor_doctrine_rule "${cursor_rule_root}"
-      for skill_name in "${SELECTED_SKILLS[@]}"; do
-        install_cursor_rule "${skill_name}" "${cursor_rule_root}"
-      done
-      ;;
-  esac
-done
+        install_cursor_doctrine_rule "${cursor_rule_root}"
+        for skill_name in "${SELECTED_SKILLS[@]}"; do
+          install_cursor_rule "${skill_name}" "${cursor_rule_root}"
+        done
+        ;;
+    esac
+  done
+fi
 
 if [[ "${SCOPE}" == "project" ]]; then
   if array_contains "codex" "${SELECTED_RUNTIME_TOOLS[@]}" && array_contains "opencode" "${SELECTED_RUNTIME_TOOLS[@]}"; then
