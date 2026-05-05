@@ -1,15 +1,16 @@
 ---
-name: check
+name: check-drift
 description: |
-  Read-only drift detector. Diffs SPEC.md against current code and reports
-  violations grouped by severity. Writes nothing — suggests remedies via
-  the spec or build skills but never invokes them. Triggers when the user
-  asks to check drift, audit the spec, verify invariants, or ask whether
-  code still matches the spec. Phrasings: "check drift", "audit the spec",
-  "does the code still match §V", "check invariants", "spec vs code".
+  Read-only PRD/SPEC drift detector. Diffs SPEC.md against current code and
+  reports violations grouped by severity. Writes nothing — suggests remedies
+  via the spec or build skills but never invokes them. Triggers when the user
+  asks to check drift, audit the spec, verify invariants, check PRD drift,
+  review requirements drift, or ask whether code still matches the spec.
+  Phrasings: "check drift", "audit the spec", "does the code still match §V",
+  "check invariants", "spec vs code", "PRD drift", "requirements drift".
 ---
 
-# check — drift report
+# check-drift — drift report
 
 Pure diagnostic. Reports violations. Writes nothing. User decides remedy.
 

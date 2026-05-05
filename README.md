@@ -10,23 +10,25 @@ Core workflow:
 - `backend`
 - `frontend`
 - `testing`
-- `pr-review`
+- `pr-review` — PR/code review entrypoint and quality gates
 - `consult-outside-expert`
-- `address-pr-reviews`
+- `address-pr-reviews` — process existing PR review comments/threads
 
 Spec-driven development:
 
 - `spec`
 - `build`
-- `check`
+- `check-drift`
 - `backprop`
 
 Caveman ecosystem:
 
 - `caveman`
-- `caveman-commit`
-- `caveman-review`
 - `compress`
+
+Commit tooling:
+
+- `commit`
 
 Security and platform:
 

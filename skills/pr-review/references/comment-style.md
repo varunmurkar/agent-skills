@@ -1,11 +1,4 @@
----
-name: caveman-review
-description: >
-  Ultra-compressed code review comments. Cuts noise from PR feedback while preserving
-  the actionable signal. Each comment is one line: location, problem, fix. Use when user
-  says "review this PR", "code review", "review the diff", "/review", or invokes
-  /caveman-review. Auto-triggers when reviewing pull requests.
----
+# Review Comment Style
 
 Write code review comments terse and actionable. One line per finding. Location, problem, fix. No throat-clearing.
 
@@ -49,7 +42,3 @@ Write code review comments terse and actionable. One line per finding. Location,
 ## Auto-Clarity
 
 Drop terse mode for: security findings (CVE-class bugs need full explanation + reference), architectural disagreements (need rationale, not just a one-liner), and onboarding contexts where the author is new and needs the "why". In those cases write a normal paragraph, then resume terse for the rest.
-
-## Boundaries
-
-Reviews only — does not write the code fix, does not approve/request-changes, does not run linters. Output the comment(s) ready to paste into the PR. "stop caveman-review" or "normal mode": revert to verbose review style.

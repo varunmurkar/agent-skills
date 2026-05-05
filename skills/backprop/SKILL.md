@@ -18,7 +18,7 @@ That edit is backprop.
 - Test failed at `/build` verification.
 - User reports bug.
 - Post-mortem after production incident.
-- `/check` flags VIOLATE with root cause found.
+- `/check-drift` flags VIOLATE with root cause found.
 
 ## SIX STEPS
 
