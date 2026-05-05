@@ -1,0 +1,246 @@
+---
+description: ">"
+alwaysApply: false
+---
+# harden-github-actions
+
+Generated from `agent-skills/skills/harden-github-actions/SKILL.md` for Cursor.
+
+
+# Resolving Zizmor Warnings in GitHub Actions
+
+## Overview
+
+zizmor finds GitHub Actions vulns. Skill = fix/suppress decision rules.
+
+Core: fix if possible. Suppress only when fix breaks required behavior; inline reason mandatory.
+
+## Prerequisites
+
+Work on branch in git worktree. Verify path + branch before edits:
+
+```bash
+pwd          # should be the worktree path
+git branch   # should show the feature branch, not main
+```
+
+## Workflow Order
+
+Required order; each step separate commit.
+
+1. Add standard zizmor CI job.
+2. Configure dependabot: github-actions updates batched weekly.
+3. Add local workflow linting to `bin/ci` or equivalent if present; add tool install to `bin/setup` if it also exists. Skip if no local CI script.
+4. Pin actions: `pinact run`.
+5. Resolve zizmor warnings by severity: high -> medium -> low -> informational.
+6. Force job-level permissions: top-level `permissions: {}`; per-job permissions. Check every workflow, including single-job workflows. Commit.
+7. Run actionlint; fix; commit.
+
+## Running pinact
+
+Run `pinact run --min-age 10` at repo root. Pins `.github/workflows/` action refs to SHAs; skips versions <10 days old.
+
+## Running zizmor
+
+Use GitHub token so online audits (`ref-version-mismatch`, `impostor-commit`) can resolve SHAs. No token -> audits silently skip; CI may later fail.
+
+```bash
+GITHUB_TOKEN=$(gh auth token) zizmor .
+```
+
+Severity filter: `--min-severity=high|medium|low`. Omit for informational.
+
+### Auto-fix workflow
+
+Per severity (high, medium, low, informational):
+
+1. Run `zizmor --fix=all --min-severity=<level> .`. Use `--fix=all`, not `--fix`; safe mode silently skips fixes. Diff review is safety net.
+2. STOP. Review diff against Decision Guide:
+   - `cache-poisoning`: disables caching; almost always revert + suppress.
+   - `artipacked`: adds `persist-credentials: false`; revert if workflow needs `git push`.
+   - `superfluous-actions`: replaces action with inline code; always revert + suppress.
+   - `bot-conditions`: replaces `github.actor` with `user.login`; revert, apply dual check from rule file.
+   - `template-injection`: generally correct.
+3. Revert bad fixes.
+4. Manually apply correct resolution for reverted findings, usually suppress-with-reason.
+5. Manually fix leftovers. `excessive-permissions`: MUST research each action permission; never guess.
+6. Verify clean: `zizmor --min-severity=<level> .`.
+7. Commit.
+
+Pedantic pass after default severities:
+
+1. Run `zizmor --persona=pedantic --min-severity=high .`.
+2. Fix same way. Common: `excessive-permissions` on single-job workflows missed by default persona. Fix = workflow `permissions: {}` + scoped job permissions.
+3. Verify clean with same command.
+4. Commit.
+
+## Decision Guide by Rule
+
+For each finding, read matching `references/` rule file. Only read needed rules.
+
+| Rule | File | Action |
+|------|------|--------|
+| `artipacked` | `references/rule-artipacked.md` | Fix (`persist-credentials: false`); suppress only if job does `git push` |
+| `template-injection` | `references/rule-template-injection.md` | Always fix: move expressions to `env:` vars |
+| `excessive-permissions` | `references/rule-excessive-permissions.md` | Always fix: workflow `permissions: {}`, scoped job permissions |
+| `dangerous-triggers` | `references/rule-dangerous-triggers.md` | Fix or suppress with 5-point checklist |
+| `secrets-outside-env` | `references/rule-secrets-outside-env.md` | Fix (`environment:`) or suppress with 3-point checklist |
+| `bot-conditions` | `references/rule-bot-conditions.md` | Always fix: dual check `actor` + `user.login`; revert auto-fix |
+| `superfluous-actions` | `references/rule-superfluous-actions.md` | Always suppress; never replace with inline code |
+| `cache-poisoning` | `references/rule-cache-poisoning.md` | Suppress by default; revert auto-fixes; escalate only if custom cache keys |
+| `unpinned-images` | `references/rule-unpinned-images.md` | Suppress by default; digest pinning nontrivial |
+| `dependabot-execution` | `references/rule-dependabot-execution.md` | Fix or suppress with 3-point checklist |
+| `dependabot-cooldown` | `references/rule-dependabot-cooldown.md` | Always fix: add `cooldown: default-days: 10` to all ecosystems |
+
+Permission mappings: `references/permission-mappings.md`. Other findings: https://docs.zizmor.sh/audits/.
+
+## Suppression Format
+
+Inline comment with rule + reason:
+
+```
+# zizmor: ignore[rule-name] -- reason why suppression is necessary
+```
+
+`--` separator = readability convention. No reason -> no suppress; fix instead.
+
+## Standard Zizmor CI Job
+
+Add to main CI workflow (`ci.yml`, `ci-checks.yml`, etc.). Placement: immediately after existing lint job (rubocop, eslint, golangci-lint, etc.); if none, before first test job. Never append to end; lint concern, not test/deploy.
+
+```yaml
+lint-actions:
+  name: GitHub Actions audit
+  runs-on: ubuntu-latest
+
+  steps:
+    - uses: actions/checkout@v6
+      with:
+        persist-credentials: false
+
+    - name: Run actionlint
+      uses: rhysd/actionlint@v1.7.11
+
+    - name: Run zizmor
+      uses: zizmorcore/zizmor-action@v0.5.2
+      with:
+        advanced-security: false
+```
+
+Use version tags first; immediately run `pinact run --min-age 10` so SHAs match pinact output.
+
+Before adding, check for standalone `actionlint` job. If present, remove it; `lint-actions` replaces it. No duplicate actionlint.
+
+## Local Workflow Linting
+
+Only if repo has local CI script (`bin/ci`, `config/ci.rb`, similar). If `bin/setup` exists, add tool install there. If no local CI script, skip entire section.
+
+### bin/setup - tool installation
+
+Install missing `actionlint`, `shellcheck`, `zizmor` via platform package manager. Follow existing `bin/setup` style.
+
+`shellcheck` required: actionlint uses it for shell in `run:` blocks. Without it, actionlint silently skips scripts; local != CI.
+
+```bash
+for tool in actionlint shellcheck zizmor; do
+  if ! command -v "$tool" &> /dev/null; then
+    if command -v brew &> /dev/null; then
+      brew install "$tool"
+    elif command -v pacman &> /dev/null; then
+      sudo pacman -S --noconfirm "$tool"
+    else
+      echo "Error: install $tool manually" >&2
+      exit 1
+    fi
+  fi
+done
+```
+
+Adapt to script conventions.
+
+### bin/ci - running the linters
+
+Add separate commands near other lint steps:
+
+```bash
+# Lint GitHub Actions workflows
+actionlint
+zizmor .
+```
+
+Separate commands = attributable failures.
+
+### Examples
+
+- **bin/setup + config/ci.rb**: [lexxy#882](https://github.com/basecamp/lexxy/pull/882)
+- **Makefile**: [basecamp-sdk@aa1f2d50](https://github.com/basecamp/basecamp-sdk/commit/aa1f2d50)
+
+## Dependabot Configuration
+
+### GitHub Actions entry
+
+Ensure `.github/dependabot.yml` has github-actions entry with batching. Schedule must be weekly.
+
+```yaml
+- package-ecosystem: github-actions
+  directory: "/"
+  groups:
+    github-actions:
+      patterns:
+        - "*"
+  schedule:
+    interval: weekly
+  cooldown:
+    default-days: 7
+```
+
+`groups` batches all action updates into one PR.
+
+### Cooldown on all ecosystems
+
+Add cooldown to every `dependabot.yml` ecosystem. Package ecosystems use semver-granular cooldowns; patches faster, majors longer soak.
+
+```yaml
+# For package ecosystems (bundler, npm, gomod, gradle, pip, etc.)
+cooldown:
+  semver-major-days: 7
+  semver-minor-days: 3
+  semver-patch-days: 2
+  default-days: 7
+
+# For github-actions (semver-granular keys are NOT supported)
+cooldown:
+  default-days: 7
+```
+
+Missing -> add. Different values -> override with standard above.
+
+## Common Mistakes
+
+| Mistake | Correction |
+|---------|------------|
+| Guessing action permissions | Read action README; if absent from mappings, research first |
+| Accepting `cache-poisoning` auto-fixes | `--fix=all` disables caching; usually revert + suppress |
+| Suppressing without reason | Explain why fix cannot apply |
+| Suppressing `template-injection` | Always fix |
+| Adding `persist-credentials: false` where workflow does `git push` | Suppress `artipacked` instead |
+| Removing permissions block | Move to job-level; implicit permissions may be broad |
+| Using `--fix` not `--fix=all` | Safe mode skips fixes; use `--fix=all` + review diff |
+| Committing without clean zizmor | Re-run `zizmor --min-severity=<level> .` first |
+| Analyzing all findings before work | Follow order: CI, dependabot, local linting, pin, severity fixes |
+| Adding zizmor job at file end | Place near lint jobs |
+| Replacing action with inline code for `superfluous-actions` | Suppress; actions more maintainable + get upstream fixes |
+| Missing permissions on reusable workflow caller jobs | Caller jobs declare permissions; reusable workflows inherit caller |
+| Adding tools to bin/setup without bin/ci | Local linting requires local CI runner |
+| Working in main repo, not worktree | Verify `pwd` + `git branch` first |
+
+## Common PR Feedback (Incorrect or Misleading)
+
+Automated reviewers often flag these; dismiss.
+
+| Feedback | Why wrong |
+|----------|-----------|
+| `ruby/setup-ruby` with `bundler-cache: true` needs `actions: write` | No. Bundler cache works with `contents: read`; cache API uses implicit `GITHUB_TOKEN`. |
+| `persist-credentials: false` breaks `git fetch` / `git worktree` | Only private repos. Target repos public; unauthenticated HTTPS fetch works. |
+| `cooldown` invalid Dependabot key | Valid. GitHub added `cooldown` to Dependabot v2 config in late 2025; Copilot stale. |
+| Checkout v3 existing jobs vs v6 `lint-actions` | Existing versions pinned as-is; Dependabot upgrades later. Template uses v6 independently. |

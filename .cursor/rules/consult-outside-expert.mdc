@@ -1,0 +1,25 @@
+---
+description: "|"
+alwaysApply: false
+---
+# consult-outside-expert
+
+Generated from `agent-skills/skills/consult-outside-expert/SKILL.md` for Cursor.
+
+
+# consult-outside-expert
+
+Open `@references/guide.md` and follow it. Do not proceed without it.
+
+Use outside expert to refine work through iterative back-and-forth. Use for:
+- fresh perspective
+- stress-test from different angle
+- steelmanning ideas
+- progressive convergence on best outcome
+
+Guide contains:
+- consultation loop + mediator role
+- round templates + expert prompts
+- convergence gates + quality criteria
+- eval checks + failure modes
+- working log templates (manual + MCP modes)
