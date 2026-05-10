@@ -3,13 +3,16 @@ name: pr-review
 description: |
   Canonical PR/code review entrypoint. Runs pre-merge quality gates, routes to
   review specializations, triages AI review feedback, and reports findings in a
-  terse actionable style. Use for "review this PR", "code review", "review the
-  diff", "PR review", or "/review".
+  terse actionable style. Use for pull request or merge request review requests
+  such as "review this PR", "review this MR", "code review", "review the diff",
+  "PR review", "MR review", or "/review".
 triggers:
   - review this PR
+  - review this MR
   - code review
   - review the diff
   - PR review
+  - MR review
   - /review
 ---
 
@@ -26,13 +29,15 @@ Provide one reusable PR/code review procedure while letting project overlays def
 
 1. Existing PR comments/threads
    - If user asks to fix, respond to, resolve, or summarize existing PR review feedback, load `../address-pr-reviews/SKILL.md`.
-   - Do not duplicate GitHub review-thread mechanics here.
+   - Do not duplicate forge-specific review-thread mechanics here.
 
 2. CLI-based quality gates
+   - Detect forge from repo remote or active review context before using forge CLI commands.
+   - Use `gh` for GitHub repositories and `glab` for GitLab repositories. Prefer CLI over browser UI when the CLI can perform the action.
    - Resolve active project playbook/overlays.
    - Run deterministic gates first: tests, lint/static analysis, typecheck/build, format check, and configured security scanners.
    - Run AI review gates after deterministic gates when configured.
-   - If the AI review gate is CodeRabbit, or the user explicitly asks to run CodeRabbit/`cr review`, load `references/coderabbit-gate.md`.
+   - If the AI review gate is CodeRabbit, or the user explicitly asks to run CodeRabbit/`cr review`, load `references/coderabbit-gate.md`. CodeRabbit flow in this skill is GitHub-specific unless project tooling states otherwise.
    - Do not run CodeRabbit twice for verification.
 
 3. Code quality, DRY/SOLID, and conventions
@@ -63,7 +68,7 @@ Provide one reusable PR/code review procedure while letting project overlays def
    - Resolve active playbook/index from project standards overlays.
 
 3. Establish baseline
-   - Determine target branch from PR context.
+   - Determine forge, target branch, and PR/MR context from repo state.
    - Inspect changed files and diff scope.
 
 4. Execute gates in declared order
@@ -106,3 +111,4 @@ Provide one reusable PR/code review procedure while letting project overlays def
 - Do not run coderabbit a second time to verify, rate limits will block.
 - Do not route fresh review requests to any other review skill unless the request is specifically about existing PR comments/threads.
 - External expert review is opt-in only; `pr-review` owns broad review phrasing.
+- GitHub-only specializations stay explicit. For example, `CodeRabbit` and `harden-github-actions` do not imply GitLab parity.

@@ -1,12 +1,14 @@
 # CodeRabbit Review Comments
 
-Use this reference only from `../SKILL.md` when processing existing CodeRabbit PR review comments or unresolved review threads.
+Use this reference only from `../SKILL.md` when processing existing CodeRabbit PR review comments or unresolved review threads on GitHub. This reference is GitHub-only.
 
 ## Preconditions
 
 - `gh` is installed and authenticated: `gh auth status`.
 - Current branch has an open GitHub PR.
 - CodeRabbit has reviewed the PR.
+
+Do not apply this reference to GitLab merge requests. If the repo is on GitLab, stop and report that this CodeRabbit flow is not implemented there.
 
 Before fetching comments, check local branch state:
 

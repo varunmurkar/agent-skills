@@ -8,6 +8,9 @@
 - Lead with key decisions and outcomes, then rationale.
 - Highlight risks and blockers clearly.
 - Do not use emoji for everything.
+- For GitHub/GitLab tasks, prefer official forge CLI over browser UI when the CLI can perform the action.
+- Use `gh` for GitHub and `glab` for GitLab.
+- If a workflow only supports one forge's mechanics, state that limit explicitly. Do not invent unsupported browser or CLI flows.
 
 ## Decision-Making
 
