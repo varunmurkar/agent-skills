@@ -30,7 +30,7 @@ coderabbit auth login
 Default agent-optimized review:
 
 ```bash
-coderabbit review --prompt-only
+coderabbit review --agent
 ```
 
 Detailed human-readable review:
@@ -48,7 +48,7 @@ Useful target/base flags:
 | `-t uncommitted` | Review uncommitted changes only. |
 | `--base main` | Compare against a branch. |
 | `--base-commit <sha>` | Compare against a commit. |
-| `--prompt-only` | Minimal output for agents. |
+| `--agent` | Minimal output for agents. |
 | `--plain` | Detailed output with suggestions. |
 
 `cr` may be available as an alias for `coderabbit`, but prefer `coderabbit` in documented commands unless project convention uses `cr`.

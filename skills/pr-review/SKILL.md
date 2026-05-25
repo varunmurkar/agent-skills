@@ -85,7 +85,7 @@ Provide one reusable PR/code review procedure while letting project overlays def
    - Evaluate against correctness, project conventions, regression risk, and test impact.
    - For CodeRabbit specifically:
      - Load `references/coderabbit-gate.md` before invoking the CLI.
-     - Default to prompt-efficient mode when available (for example `--prompt-only`).
+     - Default to prompt-efficient mode when available (for example `--agent`).
      - Use expanded/plain mode only when detailed human-readable output is explicitly required.
 
 6. Implement accepted changes
