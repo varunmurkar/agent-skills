@@ -1,14 +1,6 @@
 # Conditional Tenant Isolation Guidance
 
-Apply this guidance only when multi-tenant mode is enabled.
-
-## Tenant Mode Gate
-
-Enable only when:
-- explicitly requested, or
-- repo evidence shows tenant architecture.
-
-If not enabled, skip all tenant-specific requirements.
+Load only after `engineering-core` enables multi-tenant mode.
 
 ## Rules (When Enabled)
 

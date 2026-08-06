@@ -153,36 +153,6 @@ Example:
 skill("caveman")
 ```
 
-#### Mem0 MCP
-
-Long-term memory uses Mem0 MCP. The main installer does not start memory services; run the follow-up setup script for OpenCode:
-
-```bash
-./scripts/setup-mem0-mcp.sh
-```
-
-This creates/reuses `~/.local/share/ai-tools/.venv`, writes `~/.local/share/ai-tools/mem0_server.py`, installs pinned Python packages, and configures `~/.config/opencode/opencode.json` with `mcp.mem0.enabled=true` by default.
-
-Useful options:
-
-```bash
-./scripts/setup-mem0-mcp.sh --disable
-./scripts/setup-mem0-mcp.sh --replace
-./scripts/setup-mem0-mcp.sh --llm-model gpt-oss:120b-cloud --embed-model nomic-embed-text:latest
-```
-
-Expected local services:
-
-- Qdrant at `localhost:6333` (collection `opencode_memory`)
-- Ollama at `http://localhost:11434`
-- Ollama models `gpt-oss:120b-cloud` and `nomic-embed-text:latest`
-
-The installed MCP server exposes:
-
-- `add_memory`: store information
-- `search_memory`: search relevant memories
-- `get_all_memories`: list scoped memories
-
 ### Cursor
 
 Open the project in Cursor after installing the generated `.cursor/rules/*.mdc` files. Restart Cursor if the new rules do not appear immediately.

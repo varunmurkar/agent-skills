@@ -16,3 +16,4 @@ Frontend guidance for reusable UI architecture, accessibility, responsive behavi
    - `references/accessibility-checklist.md`
    - `references/responsive-checklist.md`
    - `references/css-core.md`
+4. If the project uses shadcn/ui or contains `components.json`, load `../shadcn/SKILL.md` and follow its component and design-system guidance.

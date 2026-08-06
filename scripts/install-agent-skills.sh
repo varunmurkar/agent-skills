@@ -10,7 +10,6 @@ readonly SOURCE_AGENTS_FILE="${REPO_ROOT}/AGENTS.md"
 readonly CODEX_HOME_DIR="${CODEX_HOME:-${HOME}/.codex}"
 readonly USER_AGENTS_DIR="${HOME}/.agents"
 readonly USER_AGENTS_SKILLS_DIR="${HOME}/.agents/skills"
-readonly INSTALL_USER_ID="${USER:-user}"
 
 AVAILABLE_SKILLS=()
 
@@ -455,8 +454,7 @@ doctrine_communication_ref() {
 render_doctrine_body() {
   local source_file="$1"
   local communication_ref="$2"
-  local install_user_id="$3"
-  awk -v communication_ref="${communication_ref}" -v install_user_id="${install_user_id}" '
+  awk -v communication_ref="${communication_ref}" '
     /^## Installed Skill Paths[[:space:]]*$/ {
       skipping_installed_paths = 1
       next
@@ -474,10 +472,6 @@ render_doctrine_body() {
       }
       next
     }
-    $0 ~ /^- Tool: mem0 MCP\. User ID:/ {
-      print "- Tool: mem0 MCP. User ID: `" install_user_id "`"
-      next
-    }
     { print }
   ' "${source_file}"
 }
@@ -487,7 +481,7 @@ write_doctrine_content() {
   local communication_ref="$2"
   local doctrine_hint="$3"
   {
-    render_doctrine_body "${SOURCE_AGENTS_FILE}" "${communication_ref}" "${INSTALL_USER_ID}"
+    render_doctrine_body "${SOURCE_AGENTS_FILE}" "${communication_ref}"
     cat <<EOF
 
 ## Installed Skill Paths
@@ -640,7 +634,7 @@ alwaysApply: true
 Generated from \`agent-skills/AGENTS.md\` for Cursor.
 
 EOF
-    render_doctrine_body "${SOURCE_AGENTS_FILE}" "$(doctrine_communication_ref cursor)" "${INSTALL_USER_ID}"
+    render_doctrine_body "${SOURCE_AGENTS_FILE}" "$(doctrine_communication_ref cursor)"
     cat <<EOF
 
 ## Installed Skill Paths
