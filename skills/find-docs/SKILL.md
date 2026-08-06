@@ -18,13 +18,7 @@ description: >-
 
 Get current docs + examples via Context7 CLI.
 
-Update CLI:
-
-```bash
-npm install -g ctx7@latest
-```
-
-Or direct:
+Use directly:
 
 ```bash
 npx ctx7@latest <command>

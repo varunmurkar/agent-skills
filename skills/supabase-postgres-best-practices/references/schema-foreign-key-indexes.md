@@ -9,7 +9,7 @@ tags: foreign-key, indexes, joins, schema
 
 Postgres does not automatically index foreign key columns. Missing indexes cause slow JOINs and CASCADE operations.
 
-**Base table:**
+**Incorrect (unindexed foreign key):**
 
 ```sql
 create table orders (
@@ -17,11 +17,7 @@ create table orders (
   customer_id bigint references customers(id) on delete cascade,
   total numeric(10,2)
 );
-```
 
-**Incorrect (unindexed foreign key):**
-
-```sql
 -- No index on customer_id!
 -- JOINs and ON DELETE CASCADE both require full table scan
 select * from orders where customer_id = 123;  -- Seq Scan
@@ -31,6 +27,12 @@ delete from customers where id = 123;          -- Locks table, scans all orders
 **Correct (indexed foreign key):**
 
 ```sql
+create table orders (
+  id bigint generated always as identity primary key,
+  customer_id bigint references customers(id) on delete cascade,
+  total numeric(10,2)
+);
+
 -- Always index the FK column
 create index orders_customer_id_idx on orders (customer_id);
 

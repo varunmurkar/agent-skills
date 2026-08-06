@@ -74,8 +74,8 @@ Provide one reusable PR/code review procedure while letting project overlays def
 4. Execute gates in declared order
    - Run each configured check command.
    - Treat gates by role even when tool names differ by stack:
-     - style/static-quality gate (for example `rubocop`, `eslint`, `ruff`) -> linter/formatter/static analysis
-     - security gate (for example `brakeman`, `semgrep`, `bandit`, `npm audit`) -> security scanner
+     - style/static-quality gate (for example `oxlint`, `ruff`, `rubocop`) -> linter/formatter/static analysis
+     - security gate (for example `bun audit`, `semgrep`, `bandit`, `brakeman`) -> security scanner
      - AI review gate (for example `coderabbit review`, equivalent AI review tooling) -> AI code review
    - Stop on blockers unless explicit risk acceptance is documented.
 

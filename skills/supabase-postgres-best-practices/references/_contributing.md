@@ -140,7 +140,7 @@ const posts = await db.query("SELECT * FROM posts WHERE user_id = ANY($1)", [
 **Primary Sources:**
 
 - Official Postgres documentation
-- Provider documentation, including Supabase where relevant
+- Supabase documentation
 - Postgres wiki
 - Established blogs (2ndQuadrant, Crunchy Data)
 
