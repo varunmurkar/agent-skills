@@ -17,3 +17,7 @@ Frontend guidance for reusable UI architecture, accessibility, responsive behavi
    - `references/responsive-checklist.md`
    - `references/css-core.md`
 4. If the project uses shadcn/ui or contains `components.json`, load `../shadcn/SKILL.md` and follow its component and design-system guidance.
+
+## Client-side routing
+
+- React Aria `Link` plus a client router needs the documented `render` adapter; raw `href` reloads the SPA.
