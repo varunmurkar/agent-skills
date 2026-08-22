@@ -59,7 +59,7 @@ Examples:
 Notes:
   - The script prompts before replacing, renaming, or skipping collisions unless --replace-all is set.
   - Codex/OpenCode installs also wire in adapted AGENTS.md guidance.
-  - Claude installs also wire in adapted CLAUDE.md guidance.
+  - Claude installs link CLAUDE.md to the canonical AGENTS.md guidance.
   - Cursor installs generate .cursor/rules/*.mdc wrappers from the skill content.
 EOF
 }
@@ -430,9 +430,10 @@ doctrine_hint_for_agents() {
   case "${key}" in
     codex) printf '`./.agents/skills/engineering-core/SKILL.md`' ;;
     opencode) printf '`./.opencode/skills/engineering-core/SKILL.md`' ;;
-    codex+opencode) printf '`./.agents/skills/engineering-core/SKILL.md` or `./.opencode/skills/engineering-core/SKILL.md`' ;;
-    codex-user|opencode-user|claude-user) printf '`~/.agents/skills/engineering-core/SKILL.md`' ;;
     claude-project) printf '`./.claude/skills/engineering-core/SKILL.md`' ;;
+    codex+opencode) printf '`./.agents/skills/engineering-core/SKILL.md` or `./.opencode/skills/engineering-core/SKILL.md`' ;;
+    codex+claude|claude+opencode|all) printf '`./.agents/skills/engineering-core/SKILL.md`, `./.claude/skills/engineering-core/SKILL.md`, or `./.opencode/skills/engineering-core/SKILL.md`' ;;
+    codex-user|opencode-user|claude-user) printf '`~/.agents/skills/engineering-core/SKILL.md`' ;;
     cursor) printf 'the generated `engineering-core.mdc` rule in `.cursor/rules/`' ;;
     *) die "Unsupported doctrine hint key: ${key}" ;;
   esac
@@ -443,9 +444,10 @@ doctrine_communication_ref() {
   case "${key}" in
     codex) printf '`./.agents/skills/caveman/SKILL.md`' ;;
     opencode) printf '`./.opencode/skills/caveman/SKILL.md`' ;;
-    codex+opencode) printf '`./.agents/skills/caveman/SKILL.md` or `./.opencode/skills/caveman/SKILL.md`' ;;
-    codex-user|opencode-user|claude-user) printf '`~/.agents/skills/caveman/SKILL.md`' ;;
     claude-project) printf '`./.claude/skills/caveman/SKILL.md`' ;;
+    codex+opencode) printf '`./.agents/skills/caveman/SKILL.md` or `./.opencode/skills/caveman/SKILL.md`' ;;
+    codex+claude|claude+opencode|all) printf '`./.agents/skills/caveman/SKILL.md`, `./.claude/skills/caveman/SKILL.md`, or `./.opencode/skills/caveman/SKILL.md`' ;;
+    codex-user|opencode-user|claude-user) printf '`~/.agents/skills/caveman/SKILL.md`' ;;
     cursor) printf 'the generated `caveman.mdc` rule in `.cursor/rules/`' ;;
     *) die "Unsupported doctrine communication key: ${key}" ;;
   esac
@@ -507,27 +509,11 @@ Read \
 EOF
 }
 
-append_claude_import() {
-  local target_file="$1"
-  local relative_companion="$2"
-  if grep -Fq "@${relative_companion}" "${target_file}"; then
-    info "Existing CLAUDE.md already imports ${relative_companion}."
-    return
-  fi
-
-  cat >> "${target_file}" <<EOF
-
-## Agent Skills Shared Guidance
-@${relative_companion}
-EOF
-}
-
 install_instruction_file() {
   local target_file="$1"
   local companion_file="$2"
   local relative_companion="$3"
   local generated_file="$4"
-  local file_kind="$5"
   local action
 
   mkdir -p -- "$(dirname -- "${target_file}")"
@@ -538,11 +524,7 @@ install_instruction_file() {
       companion)
         mkdir -p -- "$(dirname -- "${companion_file}")"
         cp -- "${generated_file}" "${companion_file}"
-        if [[ "${file_kind}" == "claude" ]]; then
-          append_claude_import "${target_file}" "${relative_companion}"
-        else
-          append_agents_loader "${target_file}" "${relative_companion}"
-        fi
+        append_agents_loader "${target_file}" "${relative_companion}"
         info "Installed companion guidance at ${companion_file}."
         ;;
       replace)
@@ -571,8 +553,7 @@ install_project_agents_guidance() {
     "${project_root}/AGENTS.md" \
     "${project_root}/.agent-skills/AGENTS.md" \
     "./.agent-skills/AGENTS.md" \
-    "${generated_file}" \
-    "agents"
+    "${generated_file}"
 }
 
 install_user_agents_guidance() {
@@ -584,7 +565,7 @@ install_user_agents_guidance() {
     "${generated_file}" \
     "$(doctrine_communication_ref "${hint_key}")" \
     "$(doctrine_hint_for_agents "${hint_key}")"
-  install_instruction_file "${target_file}" "${companion_file}" "agent-skills/AGENTS.md" "${generated_file}" "agents"
+  install_instruction_file "${target_file}" "${companion_file}" "agent-skills/AGENTS.md" "${generated_file}"
 }
 
 install_global_user_agents_guidance() {
@@ -597,25 +578,36 @@ install_global_user_agents_guidance() {
     "${USER_AGENTS_DIR}/AGENTS.md" \
     "${USER_AGENTS_DIR}/agent-skills/AGENTS.md" \
     "agent-skills/AGENTS.md" \
-    "${generated_file}" \
-    "agents"
+    "${generated_file}"
 }
 
-install_claude_guidance() {
+install_claude_link() {
   local target_file="$1"
-  local companion_file="$2"
-  local hint_key="$3"
-  local generated_file="$4"
-  local relative_companion="agent-skills/CLAUDE.md"
-  if [[ "${SCOPE}" == "project" ]]; then
-    relative_companion="./.agent-skills/CLAUDE.md"
+  local canonical_file="$2"
+  local backup_file="${target_file}.backup$(date +%Y%m%d%H%M%S)"
+  local current_target
+
+  mkdir -p -- "$(dirname -- "${target_file}")"
+
+  # Already the right link -> idempotent skip.
+  if [[ -L "${target_file}" ]]; then
+    current_target="$(readlink -- "${target_file}")"
+    if [[ "${current_target}" == "${canonical_file}" ]]; then
+      info "CLAUDE.md already links to ${canonical_file}."
+      return
+    fi
   fi
 
-  write_doctrine_content \
-    "${generated_file}" \
-    "$(doctrine_communication_ref "${hint_key}")" \
-    "$(doctrine_hint_for_agents "${hint_key}")"
-  install_instruction_file "${target_file}" "${companion_file}" "${relative_companion}" "${generated_file}" "claude"
+  [[ -f "${canonical_file}" ]] || die "Missing canonical AGENTS.md: ${canonical_file}"
+
+  # Back up whatever is there (regular file or wrong-target symlink), then link.
+  if [[ -e "${target_file}" || -L "${target_file}" ]]; then
+    mv -- "${target_file}" "${backup_file}"
+    info "Backed up existing CLAUDE.md to ${backup_file}."
+  fi
+
+  ln -s -- "${canonical_file}" "${target_file}"
+  info "Linked ${target_file} to ${canonical_file}."
 }
 
 write_cursor_doctrine_rule() {
@@ -822,20 +814,26 @@ else
 fi
 
 if [[ "${SCOPE}" == "project" ]]; then
-  if array_contains "codex" "${SELECTED_RUNTIME_TOOLS[@]}" && array_contains "opencode" "${SELECTED_RUNTIME_TOOLS[@]}"; then
+  if array_contains "codex" "${SELECTED_RUNTIME_TOOLS[@]}" && \
+     array_contains "claude" "${SELECTED_RUNTIME_TOOLS[@]}" && \
+     array_contains "opencode" "${SELECTED_RUNTIME_TOOLS[@]}"; then
+    install_project_agents_guidance "${PROJECT_ROOT}" "all"
+  elif array_contains "codex" "${SELECTED_RUNTIME_TOOLS[@]}" && array_contains "claude" "${SELECTED_RUNTIME_TOOLS[@]}"; then
+    install_project_agents_guidance "${PROJECT_ROOT}" "codex+claude"
+  elif array_contains "claude" "${SELECTED_RUNTIME_TOOLS[@]}" && array_contains "opencode" "${SELECTED_RUNTIME_TOOLS[@]}"; then
+    install_project_agents_guidance "${PROJECT_ROOT}" "claude+opencode"
+  elif array_contains "codex" "${SELECTED_RUNTIME_TOOLS[@]}" && array_contains "opencode" "${SELECTED_RUNTIME_TOOLS[@]}"; then
     install_project_agents_guidance "${PROJECT_ROOT}" "codex+opencode"
   elif array_contains "codex" "${SELECTED_RUNTIME_TOOLS[@]}"; then
     install_project_agents_guidance "${PROJECT_ROOT}" "codex"
   elif array_contains "opencode" "${SELECTED_RUNTIME_TOOLS[@]}"; then
     install_project_agents_guidance "${PROJECT_ROOT}" "opencode"
+  elif array_contains "claude" "${SELECTED_RUNTIME_TOOLS[@]}"; then
+    install_project_agents_guidance "${PROJECT_ROOT}" "claude-project"
   fi
 
   if array_contains "claude" "${SELECTED_RUNTIME_TOOLS[@]}"; then
-    install_claude_guidance \
-      "${PROJECT_ROOT}/CLAUDE.md" \
-      "${PROJECT_ROOT}/.agent-skills/CLAUDE.md" \
-      "claude-project" \
-      "${TMP_DIR}/project-CLAUDE.md"
+    install_claude_link "${PROJECT_ROOT}/CLAUDE.md" "${PROJECT_ROOT}/AGENTS.md"
   fi
 else
   if array_contains "codex" "${SELECTED_RUNTIME_TOOLS[@]}" || \
@@ -861,11 +859,7 @@ else
   fi
 
   if array_contains "claude" "${SELECTED_RUNTIME_TOOLS[@]}"; then
-    install_claude_guidance \
-      "${HOME}/.claude/CLAUDE.md" \
-      "${HOME}/.claude/agent-skills/CLAUDE.md" \
-      "claude-user" \
-      "${TMP_DIR}/user-claude-CLAUDE.md"
+    install_claude_link "${HOME}/.claude/CLAUDE.md" "${USER_AGENTS_DIR}/AGENTS.md"
   fi
 fi
 

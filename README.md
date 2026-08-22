@@ -65,9 +65,11 @@ You can target one tool or several tools at once:
 The installer is intentionally interactive when it finds collisions.
 
 - Skill and Cursor rule collisions: choose `rename`, `replace`, or `skip`.
-- `AGENTS.md` and `CLAUDE.md` collisions: choose `companion`, `replace`, or `skip`.
+- Existing `AGENTS.md` collisions: choose `companion`, `replace`, or `skip`.
 
 `companion` keeps the incumbent file and installs agent-skills guidance into a generated companion file, then wires the incumbent file to load it.
+
+Claude `CLAUDE.md` is always a symlink to the available canonical `AGENTS.md`; existing files are backed up to `CLAUDE.md.backup<datestamp>` first.
 
 ## What gets installed
 
@@ -98,8 +100,8 @@ compatibility symlinks under `~/.claude/skills/`.
   - user compatibility: `~/.claude/skills/<skill>` symlink
 - Guidance:
   - global: `~/.agents/AGENTS.md`
-  - project: `CLAUDE.md`
-  - user: `~/.claude/CLAUDE.md`
+  - project: `CLAUDE.md` (symlink to project `AGENTS.md`)
+  - user: `~/.claude/CLAUDE.md` (symlink to `~/.agents/AGENTS.md`)
 
 ### OpenCode
 
