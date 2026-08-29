@@ -18,5 +18,5 @@
 ## Contract Discipline
 
 - Keep API error contracts consistent and versioned.
-- Use field-level error details when validation fails.
+- Show field-level error details when validation fails.
 - Document any additive or breaking error contract changes.

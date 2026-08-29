@@ -21,8 +21,3 @@
 - Keep callbacks lightweight and predictable.
 - Move complex business logic to dedicated service/domain layers.
 - Cover associations, validations, scopes, and callback side effects in tests.
-
-## Conditional Tenant Guidance
-
-- Apply tenant partition-key scoping only for multi-tenant projects.
-- For single-tenant projects, skip tenant-specific filters and headers.

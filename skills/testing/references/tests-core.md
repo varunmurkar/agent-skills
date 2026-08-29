@@ -24,8 +24,3 @@
 - Track created tenants, users, and other durable resources explicitly for teardown; avoid broad cleanup by naming convention.
 - Reset connection-scoped state between examples, including tenant switching, auth/session context, role/session state, and request globals.
 - Do not run multiple spec processes concurrently against the same mutable test database unless isolation is guaranteed.
-
-## Conditional Tenant Guidance
-
-- Apply tenant-context header and scoping tests only for multi-tenant projects.
-- For single-tenant projects, skip tenant-specific header/scoping checks.
