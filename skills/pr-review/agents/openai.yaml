@@ -1,0 +1,4 @@
+interface:
+  display_name: "PR Review"
+  short_description: "Pre-merge code review and quality gates"
+  default_prompt: "Review this change for bugs, regressions, risks, and missing verification."

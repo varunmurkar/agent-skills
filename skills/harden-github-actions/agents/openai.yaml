@@ -1,0 +1,4 @@
+interface:
+  display_name: "Harden GitHub Actions"
+  short_description: "Secure GitHub Actions workflows"
+  default_prompt: "Review or harden GitHub Actions workflows for security and supply-chain risks."

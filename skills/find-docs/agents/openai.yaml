@@ -1,0 +1,4 @@
+interface:
+  display_name: "Find Docs"
+  short_description: "Current documentation and API references"
+  default_prompt: "Find and use current official documentation for the technologies involved in this task."

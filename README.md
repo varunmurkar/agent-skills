@@ -11,39 +11,37 @@ Core workflow:
 - `frontend`
 - `testing`
 - `pr-review` — PR/code review entrypoint and quality gates
-- `consult-outside-expert`
-- `address-pr-reviews` — process existing PR review comments/threads
 
 Spec-driven development:
 
 - `spec` — SPEC.md create/amend/bug recording
 - `build` — implement SPEC.md tasks
-- `check-drift` — read-only spec/PRD drift
+- `check` — read-only spec/PRD drift
 - `backprop` — failure-to-invariant protocol
 
-Caveman ecosystem:
+Caveman ecosystem (upstream):
 
-- `caveman`
-
-Commit tooling:
-
-- `commit`
+- Caveman: `cavecrew`, `caveman`, `caveman-commit`, `caveman-explore`,
+  `caveman-review`, `investigate-first`, `lean-build`, `migration`,
+  `safe-refactor`, `surgical-patch`, `verify-and-stop`
+- Cavekit: `spec`, `build`, `check`, `backprop`
+- Supabase: `supabase`, `supabase-postgres-best-practices`
 
 Security and platform:
 
 - `security-best-practices`
 - `harden-github-actions`
 - `supabase`
-- `postgres-best-practices`
+- `supabase-postgres-best-practices` (upstream)
 
-Skill authoring:
+Documentation:
 
-- `skill-crafting`
 - `find-docs`
 
 ## Install
 
-Clone this repository, then run the installer from the repo root.
+Clone this repository, then run the installer from the repo root. The installer
+fetches Caveman, Cavekit, and Supabase skills from their upstream repositories.
 
 ```bash
 ./scripts/install-agent-skills.sh --scope project --tool all
@@ -62,7 +60,7 @@ You can target one tool or several tools at once:
 ./scripts/install-agent-skills.sh --scope project --tool cursor --skill backend,frontend
 ```
 
-The installer is intentionally interactive when it finds collisions.
+The installer is intentionally interactive when it finds local collisions.
 
 - Skill and Cursor rule collisions: choose `rename`, `replace`, or `skip`.
 - Existing `AGENTS.md` collisions: choose `companion`, `replace`, or `skip`.
@@ -161,6 +159,7 @@ Open the project in Cursor after installing the generated `.cursor/rules/*.mdc` 
 
 ## Notes
 
-- The installer does not fetch anything from the network.
-- The repository no longer ships the old `.system` helper skills; it only contains the reusable top-level skills.
+- The installer requires Node/npm and network access for upstream skills.
+- Caveman runtime uses pinned `v2.3.1`; selected skill content comes from its upstream repository.
+- Project installs use `npx skills add`; user installs use `-g` and also run Caveman's pinned runtime installer.
 - The generated project and user guidance rewrites the root `AGENTS.md` skill-path references so they point at the active installed skill path.

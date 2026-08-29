@@ -1,0 +1,4 @@
+interface:
+  display_name: "Testing"
+  short_description: "Test design, debugging, and validation workflows"
+  default_prompt: "Design and run the smallest sufficient tests to validate this change."

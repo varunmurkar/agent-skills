@@ -1,0 +1,4 @@
+interface:
+  display_name: "Backend"
+  short_description: "Backend application logic, APIs, and persistence"
+  default_prompt: "Implement or review backend application logic, APIs, data access, and persistence behavior."

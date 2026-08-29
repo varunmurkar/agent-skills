@@ -105,7 +105,7 @@ Specific detail wins. Use user's full question when possible. Never include API 
 | Bad | `"auth"` |
 | Bad | `"hooks"` |
 
-One-word queries return generic results.
+One-word queries return generic results; describe what to look up in the library's documentation.
 
 Output types: code snippets (title + language block), info snippets (prose + breadcrumb context).
 

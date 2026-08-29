@@ -10,6 +10,13 @@ readonly SOURCE_AGENTS_FILE="${REPO_ROOT}/AGENTS.md"
 readonly CODEX_HOME_DIR="${CODEX_HOME:-${HOME}/.codex}"
 readonly USER_AGENTS_DIR="${HOME}/.agents"
 readonly USER_AGENTS_SKILLS_DIR="${HOME}/.agents/skills"
+readonly CAVEMAN_INSTALL_URL="https://raw.githubusercontent.com/JuliusBrussee/caveman/v2.3.1/install.sh"
+readonly CAVEMAN_SOURCE="JuliusBrussee/caveman"
+readonly CAVEKIT_SOURCE="JuliusBrussee/cavekit"
+readonly SUPABASE_SOURCE="supabase/agent-skills"
+readonly CAVEMAN_SKILLS=(cavecrew caveman caveman-commit caveman-explore caveman-review investigate-first lean-build migration safe-refactor surgical-patch verify-and-stop)
+readonly CAVEKIT_SKILLS=(spec build check backprop)
+readonly SUPABASE_SKILLS=(supabase supabase-postgres-best-practices)
 
 AVAILABLE_SKILLS=()
 
@@ -46,7 +53,7 @@ Options:
   --scope <project|user>       Required. Install into the current project or the current user profile.
   --tool <name[,name...]>      Tool target(s): codex, claude, cursor, opencode, all.
                                Defaults to all.
-  --skill <name[,name...]>     Skill subset to install. Defaults to all repository skills.
+  --skill <name[,name...]>     Local skill subset to install. Defaults to all repository skills.
   --project-root <path>        Project root for --scope project. Defaults to the current directory.
   --replace-all                Replace existing skills, instruction files, rules, and plugins without prompting.
   -h, --help                   Show this help text.
@@ -62,6 +69,77 @@ Notes:
   - Claude installs link CLAUDE.md to the canonical AGENTS.md guidance.
   - Cursor installs generate .cursor/rules/*.mdc wrappers from the skill content.
 EOF
+}
+
+skills_agent_for_tool() {
+  case "$1" in
+    codex) printf 'codex\n' ;;
+    claude) printf 'claude-code\n' ;;
+    cursor) printf 'cursor\n' ;;
+    opencode) printf 'opencode\n' ;;
+    *) die "Unsupported Skills CLI tool: $1" ;;
+  esac
+}
+
+install_external_skills() {
+  local source="$1"
+  local scope_flag=()
+  local tool
+  local agent
+  local skill
+  local skill_args=()
+  local -n skills_ref="$2"
+
+  [[ "${SCOPE}" == "user" ]] && scope_flag=(-g)
+  for tool in "${SELECTED_RUNTIME_TOOLS[@]}"; do
+    case "${tool}" in
+      codex|claude|cursor|opencode)
+        agent="$(skills_agent_for_tool "${tool}")"
+        skill_args=()
+        for skill in "${skills_ref[@]}"; do
+          skill_args+=(--skill "${skill}")
+        done
+        info "Installing selected ${source} skills for ${agent}."
+        npx -y skills add "${source}" "${scope_flag[@]}" -a "${agent}" \
+          "${skill_args[@]}" -y
+        ;;
+    esac
+  done
+}
+
+install_native_core() {
+  local target_root
+  local tool
+  local url="https://raw.githubusercontent.com/JuliusBrussee/caveman/main/skills/native-core.md"
+
+  for tool in "${SELECTED_RUNTIME_TOOLS[@]}"; do
+    case "${tool}" in
+      codex) target_root="${SCOPE_ROOT}/.agents/skills" ;;
+      claude) target_root="${SCOPE_ROOT}/.claude/skills" ;;
+      cursor) target_root="${SCOPE_ROOT}/.agents/skills" ;;
+      opencode) target_root="${SCOPE_ROOT}/.opencode/skills" ;;
+      *) continue ;;
+    esac
+    [[ "${SCOPE}" == "user" ]] && target_root="${USER_AGENTS_SKILLS_DIR}"
+    mkdir -p -- "${target_root}"
+    info "Installing native-core.md to ${target_root}."
+    curl -fsSL "${url}" -o "${target_root}/native-core.md"
+  done
+}
+
+install_caveman_user_runtime() {
+  local tool
+  local args=()
+
+  for tool in "${SELECTED_RUNTIME_TOOLS[@]}"; do
+    case "${tool}" in
+      codex|claude|cursor|opencode) args+=(--only "${tool}") ;;
+    esac
+  done
+  info "Installing Caveman runtime from ${CAVEMAN_INSTALL_URL}."
+  # Runtime installer supplies hooks/plugins; selected skill files are added
+  # below through the Skills CLI so unrelated Caveman skills stay out.
+  curl -fsSL "${CAVEMAN_INSTALL_URL}" | bash -s -- "${args[@]}" --skip-skills
 }
 
 trim() {
@@ -757,6 +835,8 @@ discover_available_skills
 validate_requested_inputs
 
 PROJECT_ROOT="$(resolve_project_root)"
+SCOPE_ROOT="${PROJECT_ROOT}"
+[[ "${SCOPE}" == "user" ]] && SCOPE_ROOT="${HOME}"
 mapfile -t SELECTED_RUNTIME_TOOLS < <(build_selected_tools)
 mapfile -t SELECTED_SKILLS < <(build_selected_skills)
 
@@ -812,6 +892,16 @@ else
     esac
   done
 fi
+
+# Upstream sources own workflow, Caveman, and Supabase skills. Install in this
+# order so Caveman's versions win any shared skill-name collisions.
+install_external_skills "${SUPABASE_SOURCE}" SUPABASE_SKILLS
+install_external_skills "${CAVEKIT_SOURCE}" CAVEKIT_SKILLS
+if [[ "${SCOPE}" == "user" ]]; then
+  install_caveman_user_runtime
+fi
+install_external_skills "${CAVEMAN_SOURCE}" CAVEMAN_SKILLS
+install_native_core
 
 if [[ "${SCOPE}" == "project" ]]; then
   if array_contains "codex" "${SELECTED_RUNTIME_TOOLS[@]}" && \

@@ -28,8 +28,7 @@ Provide one reusable PR/code review procedure while letting project overlays def
 ## Routing
 
 1. Existing PR comments/threads
-   - If user asks to fix, respond to, resolve, or summarize existing PR review feedback, load `../address-pr-reviews/SKILL.md`.
-   - Do not duplicate forge-specific review-thread mechanics here.
+   - Handle existing review feedback directly in this skill using the same triage and verification procedure.
 
 2. CLI-based quality gates
    - Detect forge from repo remote or active review context before using forge CLI commands.
@@ -42,7 +41,7 @@ Provide one reusable PR/code review procedure while letting project overlays def
 
 3. Code quality, DRY/SOLID, and conventions
    - Load `../engineering-core/SKILL.md`.
-   - Load `../backend/SKILL.md`, `../frontend/SKILL.md`, `../postgres-best-practices/SKILL.md`, or other domain skills only when changed files indicate those domains.
+   - Load `../backend/SKILL.md`, `../frontend/SKILL.md`, the installed Supabase Postgres skill, or other domain skills only when changed files indicate those domains.
    - Prefer project docs and overlays over generic conventions.
 
 4. Security
@@ -51,12 +50,8 @@ Provide one reusable PR/code review procedure while letting project overlays def
    - If the diff touches `.github/workflows/*`, GitHub Actions permissions, action pinning, or zizmor findings, load `../harden-github-actions/SKILL.md`.
 
 5. PRD/spec drift
-   - If user asks for PRD/spec drift, requirements alignment, invariants, or spec-vs-code review, load `../check-drift/SKILL.md`.
+   - If user asks for PRD/spec drift, requirements alignment, invariants, or spec-vs-code review, use the installed Cavekit `check` skill.
    - Keep drift checks read-only and report-only.
-
-6. External second opinion
-   - If user explicitly asks for an outside/external expert, Codex second opinion, or consultation loop, load `../consult-outside-expert/SKILL.md`.
-   - Do not route ordinary PR/code review requests to external consultation.
 
 ## Procedure
 

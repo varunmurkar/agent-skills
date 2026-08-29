@@ -1,0 +1,4 @@
+interface:
+  display_name: "Frontend"
+  short_description: "Frontend components, markup, styling, and interaction"
+  default_prompt: "Implement or review frontend components, markup, styling, and interaction behavior."
