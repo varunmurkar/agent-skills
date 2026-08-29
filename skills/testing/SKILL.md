@@ -1,6 +1,6 @@
 ---
 name: testing
-description: used when designing, writing, and validating tests and debugging workflows.
+description: used when designing, writing, and validating tests or test failures.
 ---
 
 # Intent

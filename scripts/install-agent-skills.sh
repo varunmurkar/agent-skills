@@ -14,7 +14,7 @@ readonly CAVEMAN_INSTALL_URL="https://raw.githubusercontent.com/JuliusBrussee/ca
 readonly CAVEMAN_SOURCE="JuliusBrussee/caveman"
 readonly CAVEKIT_SOURCE="JuliusBrussee/cavekit"
 readonly SUPABASE_SOURCE="supabase/agent-skills"
-readonly CAVEMAN_SKILLS=(cavecrew caveman caveman-commit caveman-explore caveman-review investigate-first lean-build migration safe-refactor surgical-patch verify-and-stop)
+readonly CAVEMAN_SKILLS=(caveman caveman-commit investigate-first lean-build migration safe-refactor surgical-patch verify-and-stop)
 readonly CAVEKIT_SKILLS=(spec build check backprop)
 readonly SUPABASE_SKILLS=(supabase supabase-postgres-best-practices)
 
@@ -79,6 +79,37 @@ skills_agent_for_tool() {
     opencode) printf 'opencode\n' ;;
     *) die "Unsupported Skills CLI tool: $1" ;;
   esac
+}
+
+install_opencode_explore_agent() {
+  local target_file
+  local action
+
+  if [[ "${SCOPE}" == "user" ]]; then
+    target_file="${HOME}/.config/opencode/agents/explore.md"
+  else
+    target_file="${PROJECT_ROOT}/.opencode/agents/explore.md"
+  fi
+
+  mkdir -p -- "$(dirname -- "${target_file}")"
+  if [[ -e "${target_file}" ]]; then
+    if [[ "${REPLACE_ALL}" == "true" ]]; then
+      cp -- "${REPO_ROOT}/agents/opencode/explore.md" "${target_file}"
+      info "Replaced OpenCode explore agent at ${target_file}."
+    else
+      ensure_interactive
+      read -r -p "OpenCode explore agent already exists at ${target_file}. Replace? [y/N]: " action
+      if [[ "${action,,}" == "y" || "${action,,}" == "yes" ]]; then
+        cp -- "${REPO_ROOT}/agents/opencode/explore.md" "${target_file}"
+        info "Replaced OpenCode explore agent at ${target_file}."
+      else
+        info "Skipped OpenCode explore agent at ${target_file}."
+      fi
+    fi
+  else
+    cp -- "${REPO_ROOT}/agents/opencode/explore.md" "${target_file}"
+    info "Installed OpenCode explore agent at ${target_file}."
+  fi
 }
 
 install_external_skills() {
@@ -841,6 +872,7 @@ mapfile -t SELECTED_RUNTIME_TOOLS < <(build_selected_tools)
 mapfile -t SELECTED_SKILLS < <(build_selected_skills)
 
 [[ -f "${SOURCE_AGENTS_FILE}" ]] || die "Missing ${SOURCE_AGENTS_FILE}"
+[[ -f "${REPO_ROOT}/agents/opencode/explore.md" ]] || die "Missing OpenCode explore agent"
 
 for skill_name in "${SELECTED_SKILLS[@]}"; do
   [[ -d "${SOURCE_SKILLS_DIR}/${skill_name}" ]] || die "Missing source skill: ${skill_name}"
@@ -902,6 +934,10 @@ if [[ "${SCOPE}" == "user" ]]; then
 fi
 install_external_skills "${CAVEMAN_SOURCE}" CAVEMAN_SKILLS
 install_native_core
+
+if array_contains "opencode" "${SELECTED_RUNTIME_TOOLS[@]}"; then
+  install_opencode_explore_agent
+fi
 
 if [[ "${SCOPE}" == "project" ]]; then
   if array_contains "codex" "${SELECTED_RUNTIME_TOOLS[@]}" && \

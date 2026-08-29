@@ -21,9 +21,8 @@ Spec-driven development:
 
 Caveman ecosystem (upstream):
 
-- Caveman: `cavecrew`, `caveman`, `caveman-commit`, `caveman-explore`,
-  `caveman-review`, `investigate-first`, `lean-build`, `migration`,
-  `safe-refactor`, `surgical-patch`, `verify-and-stop`
+- Caveman: `caveman`, `caveman-commit`, `investigate-first`, `lean-build`,
+  `migration`, `safe-refactor`, `surgical-patch`, `verify-and-stop`
 - Cavekit: `spec`, `build`, `check`, `backprop`
 - Supabase: `supabase`, `supabase-postgres-best-practices`
 
@@ -120,6 +119,17 @@ compatibility symlinks under `~/.claude/skills/`.
 The installer also generates a Cursor doctrine rule from the repo root `AGENTS.md`.
 
 ## Start using the skills
+
+## Cost-effective agents
+
+The installer also installs a read-only OpenCode `explore` agent using
+`ollama-cloud/deepseek-v4-flash:0731` and the FFF MCP search tools:
+
+- user: `~/.config/opencode/agents/explore.md`
+- project: `.opencode/agents/explore.md`
+
+Project configuration overrides the user-level agent. Restart OpenCode after
+installation so it reloads the agent configuration.
 
 ### Codex
 
