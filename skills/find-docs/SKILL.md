@@ -21,7 +21,7 @@ Get current docs + examples via Context7 CLI.
 Use directly:
 
 ```bash
-bunx ctx7@latest <command>
+ctx7 <command>
 ```
 
 ## Workflow
@@ -47,9 +47,9 @@ Run CLI outside Codex default sandbox. DNS/network fail (`ENOTFOUND`, host resol
 Resolve package/product -> Context7 library ID. Return matches.
 
 ```bash
-bunx ctx7@latest library react "How to clean up useEffect with async operations"
-bunx ctx7@latest library nextjs "How to set up app router with middleware"
-bunx ctx7@latest library prisma "How to define one-to-many relations with cascade delete"
+ctx7 library react "How to clean up useEffect with async operations"
+ctx7 library nextjs "How to set up app router with middleware"
+ctx7 library prisma "How to define one-to-many relations with cascade delete"
 ```
 
 Always pass `query`; required and affects ranking. Use user intent to disambiguate similar names. Never include API keys, passwords, credentials, personal data, or proprietary code.
@@ -78,10 +78,10 @@ If user names version, use version-specific ID:
 
 ```bash
 # General (latest indexed)
-bunx ctx7@latest docs /vercel/next.js "How to set up app router"
+ctx7 docs /vercel/next.js "How to set up app router"
 
 # Version-specific
-bunx ctx7@latest docs /vercel/next.js/v14.3.0-canary.87 "How to set up app router"
+ctx7 docs /vercel/next.js/v14.3.0-canary.87 "How to set up app router"
 ```
 
 Versions appear in `ctx7 library`; use closest match.
@@ -89,9 +89,9 @@ Versions appear in `ctx7 library`; use closest match.
 ## Step 2: Query Documentation
 
 ```bash
-bunx ctx7@latest docs /facebook/react "How to clean up useEffect with async operations"
-bunx ctx7@latest docs /vercel/next.js "How to add authentication middleware to app router"
-bunx ctx7@latest docs /prisma/prisma "How to define one-to-many relations with cascade delete"
+ctx7 docs /facebook/react "How to clean up useEffect with async operations"
+ctx7 docs /vercel/next.js "How to add authentication middleware to app router"
+ctx7 docs /prisma/prisma "How to define one-to-many relations with cascade delete"
 ```
 
 ### Query quality
@@ -114,7 +114,7 @@ Output types: code snippets (title + language block), info snippets (prose + bre
 Weak default answer -> rerun same command with `--research` before giving up or using training data. It uses sandboxed agents, git-pulls repos, live web search, synthesizes fresh answer. Costly; targeted retry only.
 
 ```bash
-bunx ctx7@latest docs /vercel/next.js "How does middleware matcher handle dynamic segments in v15?" --research
+ctx7 docs /vercel/next.js "How does middleware matcher handle dynamic segments in v15?" --research
 ```
 
 ## Authentication
@@ -126,7 +126,7 @@ No auth required. Higher rate limits:
 export CONTEXT7_API_KEY=your_key
 
 # Option B: OAuth login
-bunx ctx7@latest login
+ctx7 login
 ```
 
 ## Error Handling
